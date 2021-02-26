@@ -20,10 +20,6 @@ public enum EventType {
         this.intValue = intValue;
     }
 
-    public int getIntValue() {
-        return intValue;
-    }
-
     public static Watcher.Event.EventType fromInt(int intValue) {
         switch (intValue) {
             case -1:
@@ -39,5 +35,9 @@ public enum EventType {
             default:
                 throw new RuntimeException("Invalid integer value for conversion to EventType");
         }
+    }
+
+    public int getIntValue() {
+        return intValue;
     }
 }

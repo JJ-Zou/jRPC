@@ -20,15 +20,6 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
         return export == null || export;
     }
 
-    public void setInterfaceClass(Class<?> interfaceClass) {
-        setInterface(interfaceClass);
-    }
-
-    public void setInterface(Class<?> interfaceClass) {
-        this.interfaceClass = interfaceClass;
-        setInterface(interfaceClass == null ? null : interfaceClass.getName());
-    }
-
     public Class<?> getInterfaceClass() {
         if (interfaceClass != null) {
             return interfaceClass;
@@ -43,12 +34,21 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
         return interfaceClass;
     }
 
-    public void setInterface(String interfaceName) {
-        this.interfaceName = interfaceName;
+    public void setInterfaceClass(Class<?> interfaceClass) {
+        setInterface(interfaceClass);
     }
 
     public String getInterface() {
         return interfaceName;
+    }
+
+    public void setInterface(Class<?> interfaceClass) {
+        this.interfaceClass = interfaceClass;
+        setInterface(interfaceClass == null ? null : interfaceClass.getName());
+    }
+
+    public void setInterface(String interfaceName) {
+        this.interfaceName = interfaceName;
     }
 
     @Override

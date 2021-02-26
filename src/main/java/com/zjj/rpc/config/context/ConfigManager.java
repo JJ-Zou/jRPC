@@ -10,9 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class ConfigManager {
-    private static final String BEAN_NAME = "ConfigManager";
-
     static final Map<String, Map<String, AbstractConfig>> configsCache = new ConcurrentHashMap<>();
+    private static final String BEAN_NAME = "ConfigManager";
 
     private ConfigManager() {
     }

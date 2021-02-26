@@ -1,7 +1,6 @@
 package com.zjj.rpc.remoting.transport.netty;
 
 import com.zjj.rpc.remoting.transport.AbstractServer;
-import com.zjj.rpc.remoting.transport.netty.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;

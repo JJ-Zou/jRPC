@@ -3,9 +3,8 @@ package com.zjj.rpc.config;
 import com.zjj.rpc.config.support.Parameter;
 
 public class RegistryConfig extends AbstractConfig {
-    private static final long serialVersionUID = 4149044787940606573L;
     public static final String BEAN_NAME = "registryConfig";
-
+    private static final long serialVersionUID = 4149044787940606573L;
     private String protocol;
     private String address;
     private Integer port;

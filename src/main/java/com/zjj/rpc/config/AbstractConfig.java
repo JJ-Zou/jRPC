@@ -21,6 +21,18 @@ public abstract class AbstractConfig implements Serializable {
     protected String prefix;
 
     @Parameter(excluded = true)
+    public static String getTagName(Class<?> cls) {
+        String tag = cls.getSimpleName();
+        for (String suffix : SUFFIXES) {
+            if (tag.endsWith(suffix)) {
+                tag = tag.substring(0, tag.length() - suffix.length());
+                break;
+            }
+        }
+        return StringUtils.camelToSplitName(tag, "-");
+    }
+
+    @Parameter(excluded = true)
     public String getId() {
         return id;
     }
@@ -44,19 +56,6 @@ public abstract class AbstractConfig implements Serializable {
     @PostConstruct
     public void addIntoConfigManager() {
         ConfigManager.addConfig(this);
-    }
-
-
-    @Parameter(excluded = true)
-    public static String getTagName(Class<?> cls) {
-        String tag = cls.getSimpleName();
-        for (String suffix : SUFFIXES) {
-            if (tag.endsWith(suffix)) {
-                tag = tag.substring(0, tag.length() - suffix.length());
-                break;
-            }
-        }
-        return StringUtils.camelToSplitName(tag, "-");
     }
 
     @Override

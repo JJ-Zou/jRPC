@@ -6,8 +6,8 @@ import com.zjj.rpc.config.support.Parameter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConfigCenterConfig extends AbstractConfig {
-    private static final long serialVersionUID = 5273895441172778616L;
     public static final String BEAN_NAME = "configCenterConfig";
+    private static final long serialVersionUID = 5273895441172778616L;
     private AtomicBoolean inited = new AtomicBoolean(false);
 
     private String protocol;

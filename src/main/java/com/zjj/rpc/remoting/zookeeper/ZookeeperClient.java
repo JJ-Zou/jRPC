@@ -27,30 +27,19 @@ import static com.zjj.rpc.remoting.zookeeper.EventType.*;
 
 @Slf4j
 public class ZookeeperClient {
-    protected int DEFAULT_CONNECTION_TIMEOUT_MS = 5 * 1000;
-    protected int DEFAULT_SESSION_TIMEOUT_MS = 60 * 1000;
-
+    static final Charset CHARSET = Charset.forName("UTF-8");
     private static final String ZK_SESSION_EXPIRE_KEY = "zk.session.expire";
     private static final String TIMEOUT_KEY = "timeout";
-
-
-    static final Charset CHARSET = Charset.forName("UTF-8");
-
     private final CuratorFramework client;
-
     private final JRpcURL url;
-
     private final Set<StateListener> stateListeners = new CopyOnWriteArraySet<>();
-
     private final Map<String, TreeCache> treeCacheMap = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, ConcurrentMap<ChildListener, CuratorWatcherImpl>> childListeners = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, ConcurrentMap<DataListener, CuratorWatcherImpl>> listeners = new ConcurrentHashMap<>();
-
-    private volatile boolean closed = false;
-
     private final Set<String> persistentExistNodePath = ConcurrentHashMap.newKeySet();
+    protected int DEFAULT_CONNECTION_TIMEOUT_MS = 5 * 1000;
+    protected int DEFAULT_SESSION_TIMEOUT_MS = 60 * 1000;
+    private volatile boolean closed = false;
 
     public ZookeeperClient(JRpcURL url) {
         try {

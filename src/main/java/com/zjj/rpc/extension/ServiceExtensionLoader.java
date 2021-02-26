@@ -1,5 +1,6 @@
 package com.zjj.rpc.extension;
 
+import com.zjj.rpc.config.annotation.SPI;
 import com.zjj.rpc.config.configcenter.DynamicConfigurationFactory;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,7 +27,11 @@ public class ServiceExtensionLoader<T> {
     private final ConcurrentMap<String, Holder<Object>> holderInstances = new ConcurrentHashMap<>();
     // 缓存bean名称的类型
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<>();
+    // 缓存类型对应的名称
+    private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<>();
     private final Class<?> type;
+
+    private String cachedDefaultName;
 
     private ServiceExtensionLoader(Class<?> type) {
         this.type = type;
@@ -41,7 +46,46 @@ public class ServiceExtensionLoader<T> {
         return loader;
     }
 
+    public static void main(String[] args) {
+        DynamicConfigurationFactory zookeeper = ServiceExtensionLoader
+                .getExtensionLoader(DynamicConfigurationFactory.class)
+                .getExtension("zookeeper");
+        System.out.println(zookeeper.getClass());
+        Iterable iterable = ServiceExtensionLoader
+                .getExtensionLoader(Iterable.class)
+                .getExtension("linkedList");
+        System.out.println(iterable.getClass());
+    }
+
+    public String getExtensionName(T instance) {
+        return getExtensionName(instance.getClass());
+    }
+
+    public String getExtensionName(Class<?> clazz) {
+        getExtensionClasses();
+        return cachedNames.get(clazz);
+    }
+
+    private boolean containsExtension(String name) {
+        return getExtensionClasses().containsKey(name);
+    }
+
+    public T getOrDefaultExtension(String name) {
+        return containsExtension(name) ? getExtension(name) : getDefaultExtension();
+    }
+
+    public T getDefaultExtension() {
+        getExtensionClasses();
+        if (cachedDefaultName == null || cachedDefaultName.isEmpty() || cachedDefaultName.equals("true")) {
+            return null;
+        }
+        return getExtension(cachedDefaultName);
+    }
+
     public T getExtension(String name) {
+        if ("true".equals(name)) {
+            return getDefaultExtension();
+        }
         final Holder<Object> objectHolder = getOrDefault(name);
         Object instance = objectHolder.get();
         if (instance == null) {
@@ -87,6 +131,7 @@ public class ServiceExtensionLoader<T> {
     }
 
     private Map<String, Class<?>> loadExtensionClasses() {
+        cacheDefaultExtensionName();
         Map<String, Class<?>> extensionClasses = new HashMap<>();
         loadDirectory(extensionClasses, type.getName());
         return extensionClasses;
@@ -130,6 +175,7 @@ public class ServiceExtensionLoader<T> {
 
     private void loadClass(Map<String, Class<?>> extensionClasses, ClassLoader classLoader, String className, String key) throws ClassNotFoundException {
         Class<?> clazz = Class.forName(className, true, classLoader);
+        cacheName(clazz, key);
         extensionClasses.putIfAbsent(key, clazz);
     }
 
@@ -150,14 +196,15 @@ public class ServiceExtensionLoader<T> {
         return objectHolder;
     }
 
-    public static void main(String[] args) {
-        DynamicConfigurationFactory zookeeper = ServiceExtensionLoader
-                .getExtensionLoader(DynamicConfigurationFactory.class)
-                .getExtension("zookeeper");
-        System.out.println(zookeeper.getClass());
-        Iterable iterable = ServiceExtensionLoader
-                .getExtensionLoader(Iterable.class)
-                .getExtension("linkedList");
-        System.out.println(iterable.getClass());
+    private void cacheDefaultExtensionName() {
+        SPI defaultAnnotation = type.getAnnotation(SPI.class);
+        if (defaultAnnotation == null) {
+            return;
+        }
+        cachedDefaultName = defaultAnnotation.value();
+    }
+
+    private void cacheName(Class<?> clazz, String name) {
+        cachedNames.putIfAbsent(clazz, name);
     }
 }

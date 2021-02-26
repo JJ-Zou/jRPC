@@ -4,8 +4,6 @@ import javax.naming.LimitExceededException;
 
 public class RpcException extends RuntimeException {
 
-    private static final long serialVersionUID = 2320751854901756257L;
-
     public static final int UNKNOWN_EXCEPTION = 0;
     public static final int NETWORK_EXCEPTION = 1;
     public static final int TIMEOUT_EXCEPTION = 2;
@@ -15,7 +13,7 @@ public class RpcException extends RuntimeException {
     public static final int NO_INVOKER_AVAILABLE_AFTER_FILTER = 6;
     public static final int LIMIT_EXCEEDED_EXCEPTION = 7;
     public static final int TIMEOUT_TERMINATE = 8;
-
+    private static final long serialVersionUID = 2320751854901756257L;
     private int code;
 
     public RpcException() {

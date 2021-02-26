@@ -51,12 +51,12 @@ public class JRpcURL implements Serializable {
         this.parameters = parameters == null ? Collections.emptyMap() : Collections.unmodifiableMap(parameters);
     }
 
-    public String getAddress() {
-        return address;
-    }
-
     private static String getAddress(String host, int port) {
         return port <= 0 ? host : host + ':' + port;
+    }
+
+    public String getAddress() {
+        return address;
     }
 
     public String getProtocol() {

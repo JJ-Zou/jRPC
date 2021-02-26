@@ -16,9 +16,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class JRpcBootstrap {
 
-    private static volatile JRpcBootstrap instance;
     private static final String NAME = JRpcBootstrap.class.getSimpleName();
-
+    private static volatile JRpcBootstrap instance;
     private AtomicBoolean initialized = new AtomicBoolean(false);
     private AtomicBoolean started = new AtomicBoolean(false);
     private AtomicBoolean ready = new AtomicBoolean(true);
