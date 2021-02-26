@@ -1,0 +1,3 @@
+linkedList=java.util.LinkedList
+arrayList=java.util.ArrayList
+arrayDeque=java.util.ArrayDeque
