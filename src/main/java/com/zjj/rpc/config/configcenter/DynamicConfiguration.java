@@ -13,7 +13,7 @@ public interface DynamicConfiguration extends AutoCloseable {
     static DynamicConfigurationFactory getDynamicConfigurationFactory(String protocol) {
         DynamicConfigurationFactory instance = ServiceExtensionLoader
                 .getExtensionLoader(DynamicConfigurationFactory.class)
-                .getDefaultExtension();
+                .getOrDefaultExtension(protocol);
         if (instance == null) {
             throw new IllegalStateException("Cannot find impl of DynamicConfigurationFactory.");
         }

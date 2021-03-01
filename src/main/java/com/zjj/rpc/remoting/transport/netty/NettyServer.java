@@ -58,5 +58,8 @@ public class NettyServer extends AbstractServer {
         return null;
     }
 
+    public static void main(String[] args) {
+        new NettyServer();
+    }
 
 }

@@ -1,5 +1,7 @@
 package com.zjj.rpc.extension;
 
+import com.zjj.rpc.common.urils.ReflectUtils;
+import com.zjj.rpc.common.urils.StringUtils;
 import com.zjj.rpc.config.annotation.SPI;
 import com.zjj.rpc.config.configcenter.DynamicConfigurationFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -7,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
@@ -113,6 +117,22 @@ public class ServiceExtensionLoader<T> {
             return (T) instance;
         } catch (IllegalAccessException | InstantiationException e) {
             throw new IllegalStateException("Exception occurred where create extension class" + clazz + " instance {} " + name + ".", e);
+        }
+    }
+
+    private void injectExtension(T instance) {
+        for (Method method : instance.getClass().getMethods()) {
+            if (ReflectUtils.isSetter(method)) {
+                continue;
+            }
+            try {
+                Class<?> parameterType = method.getParameterTypes()[0];
+                String parameterName = StringUtils.calculateAttributeFromGetter(parameterType.getName());
+                T object = getExtension(parameterName);
+                method.invoke(instance, object);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                log.error("Failed to inject via method {} of interface {}: {}.", method.getName(), type.getName(), e.getMessage(), e);
+            }
         }
     }
 
