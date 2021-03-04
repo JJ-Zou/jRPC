@@ -1,4 +1,4 @@
-package com.zjj.rpc.common.urils;
+package com.zjj.rpc.common.utils;
 
 public class StringUtils {
     private StringUtils() {

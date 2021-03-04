@@ -1,7 +1,7 @@
 package com.zjj.rpc.extension;
 
-import com.zjj.rpc.common.urils.ReflectUtils;
-import com.zjj.rpc.common.urils.StringUtils;
+import com.zjj.rpc.common.utils.ReflectUtils;
+import com.zjj.rpc.common.utils.StringUtils;
 import com.zjj.rpc.config.annotation.SPI;
 import com.zjj.rpc.config.configcenter.DynamicConfigurationFactory;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.zjj.rpc.common.urils;
+package com.zjj.rpc.common.utils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
