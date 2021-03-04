@@ -9,13 +9,15 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
-public class ZookeeperRegistry extends FailbackRegistry {
+public class ZookeeperRegistry extends FailbackRegistry implements Closeable {
 
     private final Set<String> persistentExistNodePath = ConcurrentHashMap.newKeySet();
     private final Set<JRpcURL> availableServices = ConcurrentHashMap.newKeySet();
@@ -226,5 +228,10 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
         }
         return false;
+    }
+
+    @Override
+    public void close() throws IOException {
+        client.close();
     }
 }

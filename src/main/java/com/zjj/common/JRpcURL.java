@@ -96,7 +96,7 @@ public class JRpcURL {
 
 
     public String getUri() {
-        return protocol + "PROTOCOL_SEPARATOR" + host + ":" + port + "/" + path;
+        return protocol + "://" + host + ":" + port + "/" + path;
     }
 
     public String getIdentity() {
