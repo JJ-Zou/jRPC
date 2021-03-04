@@ -10,7 +10,11 @@ public enum JRpcURLParamType {
     connectTimeout("connectTimeout", 1000),
     registrySessionTimeout("registrySessionTimeout", 60000),
     registryRetryTimes("registryRetryTimes", 1),
-    sleepMsBetweenRetries("sleepMsBetweenRetries", 1000)
+    sleepMsBetweenRetries("sleepMsBetweenRetries", 1000),
+    maxServerConnection("maxServerConnection", 100000),
+    workerQueueSize("workerQueueSize", 0),
+    corePoolSize("corePoolSize", 20),
+    maximumPoolSize("maximumPoolSize", 200),
     ;
     private String name;
     private String value;
