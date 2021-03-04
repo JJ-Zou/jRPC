@@ -1,8 +1,6 @@
 package com.zjj.common;
 
-import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collections;
@@ -13,15 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 @Getter
-@Setter
 public class JRpcURL {
 
-    private String protocol;
-    private String host;
-    private int port;
+    private final String protocol;
+    private final String host;
+    private final int port;
     // 接口名称
-    private String path;
-    private Map<String, String> parameters;
+    private final String path;
+    private final Map<String, String> parameters;
 
     private volatile transient Map<String, Number> cachedNumber;
 
@@ -35,6 +32,10 @@ public class JRpcURL {
         this.port = port;
         this.path = path;
         this.parameters = parameters;
+    }
+
+    public Map<String, String> getParameters() {
+        return Collections.unmodifiableMap(parameters);
     }
 
     public static JRpcURL valueOf(String url) {
@@ -89,11 +90,17 @@ public class JRpcURL {
 
     public JRpcURL deepClone() {
         if (parameters == null) {
-            return new JRpcURL(protocol, host, port, path);
+            return new JRpcURL(getProtocol(), getHost(), getPort(), getPath());
         }
-        return new JRpcURL(protocol, host, port, path, new HashMap<>(parameters));
+        return new JRpcURL(getProtocol(), getHost(), getPort(), getPath(), new HashMap<>(getParameters()));
     }
 
+    public JRpcURL deepCloneWithAddress(String host, int port) {
+        if (parameters == null) {
+            return new JRpcURL(getProtocol(), host, port, getPath());
+        }
+        return new JRpcURL(getProtocol(), host, port, getPath(), new HashMap<>(getParameters()));
+    }
 
     public String getUri() {
         return protocol + "://" + host + ":" + port + "/" + path;

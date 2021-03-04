@@ -4,6 +4,7 @@ import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
 import com.zjj.registry.Registry;
 import com.zjj.registry.support.AbstractRegistryFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
@@ -12,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class ZookeeperRegistryFactory extends AbstractRegistryFactory {
     @Override
     protected Registry createRegistry(JRpcURL registryUrl) {
@@ -39,7 +41,7 @@ public class ZookeeperRegistryFactory extends AbstractRegistryFactory {
     }
 
     public static void main(String[] args) {
-        Map<String, String> parameters =  new HashMap<>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("address", "39.105.65.104:2181");
         JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
         Registry registry = new ZookeeperRegistryFactory().getRegistry(jRpcURL);

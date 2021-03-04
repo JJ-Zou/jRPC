@@ -25,7 +25,7 @@ public abstract class AbstractRegistry implements Registry {
     }
 
     @Override
-    public JRpcURL getUrl() {
+    public JRpcURL getRegistryUrl() {
         return registryUrl;
     }
 
@@ -104,6 +104,13 @@ public abstract class AbstractRegistry implements Registry {
             result.addAll(value);
         }
         return result;
+    }
+
+    protected void notify(JRpcURL refUrl, NotifyListener listener, List<JRpcURL> urls) {
+        if (listener == null || urls == null) {
+            return;
+        }
+
     }
 
     protected List<JRpcURL> getCachedUrls(JRpcURL url) {

@@ -95,10 +95,17 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         Set<NotifyListener> listeners = failedSubscribed.get(url);
         if (listeners != null) {
             listeners.remove(listener);
+            if (listeners.isEmpty()) {
+                failedSubscribed.remove(url);
+            }
         }
+
         listeners = failedUnsubscribed.get(url);
         if (listeners != null) {
             listeners.remove(listener);
+            if (listeners.isEmpty()) {
+                failedUnsubscribed.remove(url);
+            }
         }
     }
 
@@ -143,7 +150,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     }
 
     private void retryFailedUnsubscribed() {
-        failedSubscribed.forEach((url, notifyListeners) -> notifyListeners.forEach(listener -> {
+        failedUnsubscribed.forEach((url, notifyListeners) -> notifyListeners.forEach(listener -> {
             try {
                 log.info("[{}]: Try to retry unsubscribe URL ({}) with {}.", registryClassName, url, listener);
                 unsubscribe(url, listener);

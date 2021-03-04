@@ -1,10 +1,15 @@
 package com.zjj.registry.zookeeper;
 
 import com.zjj.common.JRpcURL;
-import com.zjj.registry.NotifyListener;
-import com.zjj.registry.support.FailbackRegistry;
+import com.zjj.common.JRpcURLParamType;
+import com.zjj.registry.ServiceListener;
+import com.zjj.registry.support.ServiceFailbackRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.TreeCache;
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent;
+import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
@@ -12,22 +17,43 @@ import org.apache.zookeeper.KeeperException.NodeExistsException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
-public class ZookeeperRegistry extends FailbackRegistry implements Closeable {
+public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closeable {
 
     private final Set<String> persistentExistNodePath = ConcurrentHashMap.newKeySet();
     private final Set<JRpcURL> availableServices = ConcurrentHashMap.newKeySet();
-
-
+    private final ConcurrentMap<JRpcURL, Map<ServiceListener, TreeCacheListener>> serviceListeners = new ConcurrentHashMap<>();
     private final CuratorFramework client;
+    private final TreeCache treeCache;
 
     public ZookeeperRegistry(JRpcURL url, CuratorFramework client) {
         super(url);
         this.client = client;
+        client.getConnectionStateListenable().addListener((c, state) -> {
+            log.info("CuratorFramework {} change the state {}", client.getClass().getSimpleName(), state);
+            switch (state) {
+                case LOST:
+                    // todo: session 失效重新写入节点
+                    break;
+                case CONNECTED:
+                case READ_ONLY:
+                case SUSPENDED:
+                case RECONNECTED:
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + state);
+            }
+        });
+        this.treeCache = TreeCache.newBuilder(client, "/jrpc").build();
+        try {
+            this.treeCache.start();
+        } catch (Exception e) {
+            log.warn("TreeCache start err.", e);
+        }
     }
 
     @Override
@@ -43,24 +69,40 @@ public class ZookeeperRegistry extends FailbackRegistry implements Closeable {
     }
 
     @Override
-    protected void doSubscribe(JRpcURL url, NotifyListener listener) {
-
+    protected void subscribeService(JRpcURL url, ServiceListener serviceListener) {
+        Map<ServiceListener, TreeCacheListener> treeCacheListeners = serviceListeners.computeIfAbsent(url, map -> new ConcurrentHashMap<>());
+        TreeCacheListener treeCacheListener = treeCacheListeners
+                .computeIfAbsent(serviceListener, tl -> new TreeCachedListerImpl(this, serviceListener, url));
+        removeNode(url, ZkNodeType.CLIENT);
+        createNode(url, ZkNodeType.CLIENT);
+        treeCache.getListenable().addListener(treeCacheListener);
+        log.info("[ZookeeperRegistry] subscribe service: path = {}, info= {}", ZkUtils.toNodePath(url, ZkNodeType.AVAILABLE_SERVICE), url.toFullString());
     }
 
     @Override
-    protected void doUnsubscribe(JRpcURL url, NotifyListener listener) {
-
+    protected void unsubscribeService(JRpcURL url, ServiceListener serviceListener) {
+        Map<ServiceListener, TreeCacheListener> listenerMap = serviceListeners.get(url);
+        if (listenerMap == null) {
+            return;
+        }
+        TreeCacheListener treeCacheListener = listenerMap.remove(serviceListener);
+        if (treeCacheListener != null) {
+            treeCache.getListenable().removeListener(treeCacheListener);
+        }
+        log.info("[ZookeeperRegistry] unsubscribe service: path = {}.", url);
     }
 
     @Override
     protected void doAvailable(JRpcURL url) {
         if (url == null) {
             for (JRpcURL jRpcURL : getRegisteredServices()) {
+                removeNode(jRpcURL, ZkNodeType.AVAILABLE_SERVICE);
                 removeNode(jRpcURL, ZkNodeType.UNAVAILABLE_SERVICE);
                 createNode(jRpcURL, ZkNodeType.AVAILABLE_SERVICE);
                 availableServices.add(jRpcURL);
             }
         } else {
+            removeNode(url, ZkNodeType.AVAILABLE_SERVICE);
             removeNode(url, ZkNodeType.UNAVAILABLE_SERVICE);
             createNode(url, ZkNodeType.AVAILABLE_SERVICE);
             availableServices.add(url);
@@ -71,25 +113,36 @@ public class ZookeeperRegistry extends FailbackRegistry implements Closeable {
     protected void doUnavailable(JRpcURL url) {
         if (url == null) {
             for (JRpcURL jRpcURL : getRegisteredServices()) {
+                removeNode(jRpcURL, ZkNodeType.UNAVAILABLE_SERVICE);
                 removeNode(jRpcURL, ZkNodeType.AVAILABLE_SERVICE);
                 createNode(jRpcURL, ZkNodeType.UNAVAILABLE_SERVICE);
                 availableServices.remove(jRpcURL);
             }
         } else {
+            removeNode(url, ZkNodeType.UNAVAILABLE_SERVICE);
             removeNode(url, ZkNodeType.AVAILABLE_SERVICE);
             createNode(url, ZkNodeType.UNAVAILABLE_SERVICE);
             availableServices.remove(url);
         }
     }
 
+
     @Override
-    protected List<JRpcURL> doDiscover(JRpcURL url) {
-        return null;
+    protected List<JRpcURL> discoverService(JRpcURL url) {
+        String parentPath = ZkUtils.toNodeTypePath(url, ZkNodeType.AVAILABLE_SERVICE);
+        if (!checkExists(parentPath)) {
+            return Collections.emptyList();
+        }
+        return nodeTChildrenUrls(url, parentPath);
     }
 
     private void createNode(JRpcURL url, ZkNodeType nodeType) {
-        String path = ZkUtils.toNodeTypePath(url, nodeType);
-        create(path, true);
+        String nodeTypePath = ZkUtils.toNodeTypePath(url, nodeType);
+        if (checkExists(nodeTypePath)) {
+            create(nodeTypePath, false);
+        }
+        String path = ZkUtils.toNodePath(url, nodeType);
+        create(path, url.toFullString(), true);
     }
 
     private void removeNode(JRpcURL url, ZkNodeType nodeType) {
@@ -143,6 +196,28 @@ public class ZookeeperRegistry extends FailbackRegistry implements Closeable {
             log.warn("ZNode {} already exist.", path, e);
         } catch (Exception e) {
             throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
+    private void create(String path, String data, boolean ephemeral) {
+        if (!ephemeral) {
+            if (persistentExistNodePath.contains(path)) {
+                return;
+            }
+            if (checkExists(path)) {
+                persistentExistNodePath.add(path);
+                return;
+            }
+        }
+        int i = path.lastIndexOf('/');
+        if (i > 0) {
+            create(path.substring(0, i), false);
+        }
+        if (ephemeral) {
+            createEphemeral(path, data);
+        } else {
+            createPersistent(path, data);
+            persistentExistNodePath.add(path);
         }
     }
 
@@ -213,7 +288,7 @@ public class ZookeeperRegistry extends FailbackRegistry implements Closeable {
         try {
             return client.getChildren().forPath(path);
         } catch (NoNodeException e) {
-            return null;
+            return Collections.emptyList();
         } catch (Exception e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
@@ -230,8 +305,104 @@ public class ZookeeperRegistry extends FailbackRegistry implements Closeable {
         return false;
     }
 
+    private List<JRpcURL> nodeTChildrenUrls(JRpcURL url, String parentPath) {
+        List<JRpcURL> ret = new ArrayList<>();
+        // 服务节点路径为 host:port
+        for (String node : getChildren(parentPath)) {
+            String childPath = parentPath + "/" + node;
+            String data = getContent(childPath);
+            JRpcURL newUrl = null;
+            try {
+                newUrl = JRpcURL.valueOf(data);
+            } catch (Exception e) {
+                log.warn("node content {} with path {} parse fail, maybe it's not a service node.", data, childPath);
+            }
+            if (newUrl == null) {
+                String host;
+                int port = 14130;
+                if (node.contains(":")) {
+                    String[] split = node.split(":");
+                    host = split[0];
+                    port = Integer.parseInt(split[1]);
+                } else {
+                    host = node;
+                }
+                // 引用对象，必须深拷贝才能不改变原对象
+                newUrl = url.deepCloneWithAddress(host, port);
+            }
+            ret.add(newUrl);
+        }
+        return ret;
+    }
+
     @Override
     public void close() throws IOException {
         client.close();
     }
+
+    static class TreeCachedListerImpl implements TreeCacheListener {
+        private final ZookeeperRegistry registry;
+        private final ServiceListener serviceListener;
+        private final JRpcURL url;
+
+        public TreeCachedListerImpl(ZookeeperRegistry registry, ServiceListener serviceListener, JRpcURL url) {
+            this.registry = registry;
+            this.serviceListener = serviceListener;
+            this.url = url;
+        }
+
+        @Override
+        public void childEvent(CuratorFramework client, TreeCacheEvent event) throws Exception {
+            ChildData childData = event.getData();
+            String path;
+            String data;
+            log.info("[ZookeeperRegistry] listen event ({}) from path ({})。", event.getType(), childData.getPath());
+            switch (event.getType()) {
+                case NODE_ADDED:
+                    path = childData.getPath();
+                    data = new String(childData.getData(), StandardCharsets.UTF_8);
+                    log.info("NODE_ADDED path [{}] data [{}]。", path, data);
+                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeTChildrenUrls(url, path));
+                    break;
+                case NODE_UPDATED:
+                    path = childData.getPath();
+                    data = new String(childData.getData(), StandardCharsets.UTF_8);
+                    log.info("NODE_UPDATED path [{}] data [{}]。", path, data);
+                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeTChildrenUrls(url, path));
+                    break;
+                case NODE_REMOVED:
+                    path = childData.getPath();
+                    data = new String(childData.getData(), StandardCharsets.UTF_8);
+                    log.info("NODE_REMOVED path [{}] data [{}]。", path, data);
+                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeTChildrenUrls(url, path));
+                    break;
+                case INITIALIZED:
+                    break;
+                case CONNECTION_LOST:
+                    break;
+                case CONNECTION_RECONNECTED:
+                    break;
+                case CONNECTION_SUSPENDED:
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + event);
+            }
+        }
+
+    }
+
+
+    public static void main(String[] args) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("address", "39.105.65.104:2181");
+        parameters.put(JRpcURLParamType.registryRetryPeriod.getName(), "1000");
+        JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
+        ZookeeperRegistry registry = (ZookeeperRegistry) new ZookeeperRegistryFactory().createRegistry(jRpcURL);
+        registry.register(jRpcURL);
+        registry.create("/jrpc/default_rpc/com.zjj.registry.zookeeper/service/132.22.22.1:9999", false);
+        registry.subscribe(jRpcURL, (url, urls) -> log.info("Test: {}, {}", url, urls));
+        System.out.println(registry.discover(jRpcURL));
+        registry.unsubscribe(jRpcURL, (url, urls) -> log.info("Test: {}, {}", url, urls));
+    }
+
 }
