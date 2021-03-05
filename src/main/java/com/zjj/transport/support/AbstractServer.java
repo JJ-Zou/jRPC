@@ -13,8 +13,6 @@ public abstract class AbstractServer implements Server {
 
     protected JRpcURL url;
 
-
-
     protected AbstractServer(JRpcURL url) {
         this.url = url;
     }

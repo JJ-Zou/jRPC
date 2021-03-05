@@ -6,6 +6,7 @@ import com.zjj.executor.StandardThreadPoolExecutor;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.transport.MessageHandler;
+import com.zjj.transport.netty.NettyChannelHandler;
 import com.zjj.transport.support.AbstractServer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -30,7 +31,7 @@ public class NettyServer extends AbstractServer {
     private final AtomicInteger rejectConnections = new AtomicInteger(0);
 
     private NettyServerChannelManager channelManager;
-    private NettyServerHandler handler;
+    private NettyChannelHandler handler;
     private StandardThreadPoolExecutor executor;
 
     private ServerBootstrap bootstrap;
@@ -87,7 +88,7 @@ public class NettyServer extends AbstractServer {
                 workerQueueSize,
                 new DefaultThreadFactory("NettyServer-" + url.getAddress(), true));
 
-        handler = new NettyServerHandler(this, messageHandler, executor);
+        handler = new NettyChannelHandler(this, messageHandler, executor);
 
         log.info("NettyServer start open URL {}", url);
         bootstrap.group(bossGroup, workerGroup)
