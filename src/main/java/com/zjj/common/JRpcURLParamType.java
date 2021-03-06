@@ -15,10 +15,14 @@ public enum JRpcURLParamType {
     workerQueueSize("workerQueueSize", 0),
     corePoolSize("corePoolSize", 20),
     maximumPoolSize("maximumPoolSize", 200),
+    clientInitConnections("clientInitConnections", 2),
+    isAsyncInitConnections("isAsyncInitConnections", false),
+    connectTimeoutMills("connectTimeoutMills", 5000),
     ;
     private String name;
     private String value;
     private int intValue;
+    private boolean booleanValue;
 
     JRpcURLParamType(String name, String value) {
         this.name = name;
@@ -28,6 +32,11 @@ public enum JRpcURLParamType {
     JRpcURLParamType(String name, int intValue) {
         this.name = name;
         this.intValue = intValue;
+    }
+
+    JRpcURLParamType(String name, boolean booleanValue) {
+        this.name = name;
+        this.booleanValue = booleanValue;
     }
 
     public String getName() {
@@ -40,5 +49,9 @@ public enum JRpcURLParamType {
 
     public int getIntValue() {
         return intValue;
+    }
+
+    public boolean isBooleanValue() {
+        return booleanValue;
     }
 }

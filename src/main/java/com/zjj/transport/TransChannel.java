@@ -18,8 +18,6 @@ public interface TransChannel {
 
     void close();
 
-    void close(int timeout);
-
     boolean isClosed();
 
     boolean isAvailable();

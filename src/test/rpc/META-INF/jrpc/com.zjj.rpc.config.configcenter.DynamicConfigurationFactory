@@ -1,1 +1,0 @@
-zookeeper=com.zjj.rpc.config.configcenter.support.zookeeper.ZookeeperDynamicConfigurationFactory

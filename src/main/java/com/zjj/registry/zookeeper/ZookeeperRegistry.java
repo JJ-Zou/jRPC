@@ -390,19 +390,4 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
         }
 
     }
-
-
-    public static void main(String[] args) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("address", "39.105.65.104:2181");
-        parameters.put(JRpcURLParamType.registryRetryPeriod.getName(), "1000");
-        JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
-        ZookeeperRegistry registry = (ZookeeperRegistry) new ZookeeperRegistryFactory().createRegistry(jRpcURL);
-        registry.register(jRpcURL);
-        registry.create("/jrpc/default_rpc/com.zjj.registry.zookeeper/service/132.22.22.1:9999", false);
-        registry.subscribe(jRpcURL, (url, urls) -> log.info("Test: {}, {}", url, urls));
-        System.out.println(registry.discover(jRpcURL));
-        registry.unsubscribe(jRpcURL, (url, urls) -> log.info("Test: {}, {}", url, urls));
-    }
-
 }

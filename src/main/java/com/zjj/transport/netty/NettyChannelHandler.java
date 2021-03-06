@@ -7,14 +7,15 @@ import com.zjj.transport.TransChannel;
 import com.zjj.transport.netty.server.NettyServer;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ServiceLoader;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
+@ChannelHandler.Sharable
 public class NettyChannelHandler extends ChannelDuplexHandler {
 
     private final ThreadPoolExecutor executor;
@@ -30,7 +31,7 @@ public class NettyChannelHandler extends ChannelDuplexHandler {
         this.transChannel = transChannel;
         this.messageHandler = messageHandler;
         this.executor = executor;
-        this.codec = ServiceLoader.load(Codec.class).iterator().next();
+        this.codec = null;
     }
 
     @Override

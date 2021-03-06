@@ -1,13 +1,12 @@
 package com.zjj.config;
 
-import lombok.Data;
+import com.zjj.common.utils.Utils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 @Setter
 @Getter
@@ -18,29 +17,6 @@ public abstract class AbstractConfig implements Serializable {
 
     protected String id;
 
-
-    private boolean isGetter(Method method) {
-        String name = method.getName();
-        if (!name.startsWith("get") && !name.startsWith("is")) {
-            return false;
-        }
-        if (name.equals("get") || name.equals("is")) {
-            return false;
-        }
-        if (name.equals("getClass") || name.equals("getObject")) {
-            return false;
-        }
-        if (!Modifier.isPublic(method.getModifiers())) {
-            return false;
-        }
-        if (method.getParameterCount() != 0) {
-            return false;
-        }
-        if (method.getReturnType().isPrimitive()) {
-            return false;
-        }
-        return true;
-    }
 
     private static final String[] SUFFIXES = new String[]{"Config", "Bean"};
 
@@ -67,7 +43,7 @@ public abstract class AbstractConfig implements Serializable {
             builder.append("<jrpc:")
                     .append(getTagName(getClass()));
             for (Method method : getClass().getMethods()) {
-                if (!isGetter(method)) {
+                if (!Utils.isGetter(method)) {
                     continue;
                 }
                 try {

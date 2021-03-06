@@ -6,6 +6,7 @@ import com.zjj.executor.StandardThreadPoolExecutor;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.transport.MessageHandler;
+import com.zjj.transport.netty.ChannelState;
 import com.zjj.transport.netty.NettyChannelHandler;
 import com.zjj.transport.support.AbstractServer;
 import io.netty.bootstrap.ServerBootstrap;
@@ -14,6 +15,7 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NettyServer extends AbstractServer {
 
     private final AtomicInteger rejectConnections = new AtomicInteger(0);
+
+    private volatile ChannelState state = ChannelState.UNINITIALIZED;
 
     private NettyServerChannelManager channelManager;
     private NettyChannelHandler handler;
@@ -47,19 +51,10 @@ public class NettyServer extends AbstractServer {
         this.messageHandler = messageHandler;
     }
 
-    public int incrementReject() {
-        return rejectConnections.incrementAndGet();
+    public void incrementReject() {
+        rejectConnections.incrementAndGet();
     }
 
-    @Override
-    public boolean isBound() {
-        return channel != null && channel.isActive();
-    }
-
-    @Override
-    public Response request(Request request) throws IOException {
-        throw new IllegalStateException("NettyServer method request(Request) unsupported.");
-    }
 
     @Override
     public boolean open() {
@@ -95,26 +90,32 @@ public class NettyServer extends AbstractServer {
                 .channel(NioServerSocketChannel.class)
                 .childOption(ChannelOption.TCP_NODELAY, true)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
-                .childHandler(new ChannelInitializer<NioServerSocketChannel>() {
+                .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
-                    protected void initChannel(NioServerSocketChannel ch) throws Exception {
+                    protected void initChannel(SocketChannel ch) throws Exception {
                         ch.pipeline().addLast("server-channel-manager", channelManager)
                                 .addLast("server-handler", handler);
                     }
                 });
         channel = bootstrap.bind(url.getPort()).syncUninterruptibly().channel();
         setLocalAddress((InetSocketAddress) channel.localAddress());
+        state = ChannelState.ACTIVE;
         log.info("NettyServer channel {} is open success with URL {}", channel, url);
-        return channel.isActive();
+        return state.isActive();
+    }
+
+    @Override
+    public boolean isBound() {
+        return channel != null && channel.isActive();
+    }
+
+    @Override
+    public Response request(Request request) throws IOException {
+        throw new IllegalStateException("NettyServer method request(Request) unsupported.");
     }
 
     @Override
     public void close() {
-        close(0);
-    }
-
-    @Override
-    public void close(int timeout) {
         if (isClosed()) {
             return;
         }
@@ -130,16 +131,17 @@ public class NettyServer extends AbstractServer {
         if (workerGroup != null) {
             workerGroup.shutdownGracefully();
         }
+        state = ChannelState.CLOSED;
     }
 
     @Override
     public boolean isClosed() {
-        return !channel.isOpen();
+        return state.isClosed();
     }
 
     @Override
     public boolean isAvailable() {
-        return isBound();
+        return state.isActive();
     }
 
     @Override

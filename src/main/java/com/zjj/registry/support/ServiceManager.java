@@ -1,8 +1,8 @@
 package com.zjj.registry.support;
 
 import com.zjj.common.JRpcURL;
+import com.zjj.common.JRpcURLParamType;
 import com.zjj.registry.NotifyListener;
-import com.zjj.registry.Registry;
 import com.zjj.registry.ServiceListener;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,9 +19,9 @@ public class ServiceManager implements ServiceListener {
 
     private final JRpcURL refUrl;
 
-    private final Registry registry;
+    private final ServiceFailbackRegistry registry;
 
-    public ServiceManager(JRpcURL refUrl, Registry registry) {
+    public ServiceManager(JRpcURL refUrl, ServiceFailbackRegistry registry) {
         log.info("ServiceManager init URL: {}", refUrl.toFullString());
         this.refUrl = refUrl;
         this.registry = registry;
@@ -34,7 +34,14 @@ public class ServiceManager implements ServiceListener {
     public void removeNotifyListener(NotifyListener listener) {
         notifyListeners.remove(listener);
     }
+
     @Override
-    public void notifyService(JRpcURL refUrl, JRpcURL registryUrl, List<JRpcURL> urls) {
+    public void notifyService(JRpcURL serviceUrl, JRpcURL registryUrl, List<JRpcURL> urls) {
+        String group = serviceUrl.getParameter(JRpcURLParamType.group.getName(), JRpcURLParamType.group.getValue());
+        serviceCache.put(group, urls);
+        for (NotifyListener notifyListener : notifyListeners) {
+            notifyListener.notify(registry.getRegistryUrl(), urls);
+        }
     }
+
 }

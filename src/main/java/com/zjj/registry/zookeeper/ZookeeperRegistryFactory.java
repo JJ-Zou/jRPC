@@ -39,15 +39,4 @@ public class ZookeeperRegistryFactory extends AbstractRegistryFactory {
             throw new IllegalStateException(e.getMessage(), e);
         }
     }
-
-    public static void main(String[] args) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("address", "39.105.65.104:2181");
-        JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
-        Registry registry = new ZookeeperRegistryFactory().getRegistry(jRpcURL);
-        registry.register(jRpcURL);
-        registry = new ZookeeperRegistryFactory().getRegistry(jRpcURL);
-        registry.unregister(jRpcURL);
-    }
-
 }

@@ -168,6 +168,10 @@ public class JRpcURL {
         return getParameter(JRpcURLParamType.module.getName(), JRpcURLParamType.module.getValue());
     }
 
+    public String getServiceKey() {
+        return getGroup() + "/" + getPath() + "/" + getVersion();
+    }
+
     public boolean containsParameter(String key) {
         return StringUtils.isNoneBlank(getParameter(key));
     }
