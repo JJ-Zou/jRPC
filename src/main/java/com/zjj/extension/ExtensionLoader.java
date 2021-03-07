@@ -1,14 +1,14 @@
 package com.zjj.extension;
 
-import com.zjj.common.utils.Utils;
+import com.zjj.common.utils.ReflectUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -22,9 +22,9 @@ public class ExtensionLoader<T> {
 
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_CLASS_INSTANCES = new ConcurrentHashMap<>();
 
-    private static final ConcurrentMap<String, Object> EXTENSION_NAME_INSTANCES = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Object> extensionNameInstances = new ConcurrentHashMap<>();
 
-    private static final ConcurrentMap<String, Class<?>> EXTENSION_CLASSES = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Class<?>> extensionClasses = new ConcurrentHashMap<>();
 
     private final Class<T> type;
     private final ClassLoader classLoader;
@@ -48,7 +48,7 @@ public class ExtensionLoader<T> {
     }
 
     private boolean containsExtension(String name) {
-        return EXTENSION_NAME_INSTANCES.containsKey(name);
+        return extensionNameInstances.containsKey(name);
     }
 
     public T getDefaultExtension() {
@@ -63,15 +63,15 @@ public class ExtensionLoader<T> {
         if (name == null) {
             return null;
         }
-        Object instance = EXTENSION_NAME_INSTANCES.computeIfAbsent(name, o -> createExtension(name));
+        Object instance = extensionNameInstances.computeIfAbsent(name, o -> createExtension(name));
         return (T) instance;
     }
 
     private T createExtension(String name) {
-        if (!EXTENSION_CLASSES.containsKey(name)) {
+        if (!extensionClasses.containsKey(name)) {
             loadExtensionClasses();
         }
-        Class<?> clazz = EXTENSION_CLASSES.get(name);
+        Class<?> clazz = extensionClasses.get(name);
         if (clazz == null) {
             throw new IllegalStateException("Cannot find instance of " + name);
         }
@@ -90,20 +90,19 @@ public class ExtensionLoader<T> {
     }
 
     private void injectExtension(T instance) {
-        for (Method method : instance.getClass().getMethods()) {
-            if (!Utils.isSetter(method)) {
-                continue;
-            }
-            try {
-                String property = Utils.getPropertyFromSetter(method);
-                Object extension = getExtension(property);
-                if (extension != null) {
-                    method.invoke(instance, extension);
-                }
-            } catch (Exception e) {
-                log.error("Cannot use method {} inject filed into instance {}.", method, instance, e);
-            }
-        }
+        Arrays.stream(instance.getClass().getMethods())
+                .filter(ReflectUtils::isSetter)
+                .forEach(method -> {
+                    try {
+                        Class<?> parameterType = method.getParameterTypes()[0];
+                        Object extension = getExtensionLoader(parameterType).getDefaultExtension();
+                        if (extension != null) {
+                            method.invoke(instance, extension);
+                        }
+                    } catch (Exception e) {
+                        log.error("Cannot use method {} inject filed into instance {}.", method, instance, e);
+                    }
+                });
     }
 
     private void loadExtensionClasses() {
@@ -114,6 +113,8 @@ public class ExtensionLoader<T> {
     private void cacheDefaultKey() {
         SPI annotation = type.getAnnotation(SPI.class);
         if (annotation == null || StringUtils.isBlank(annotation.value())) {
+            String simpleName = type.getSimpleName();
+            this.cachedDefaultKey = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
             return;
         }
         this.cachedDefaultKey = annotation.value();
@@ -162,7 +163,7 @@ public class ExtensionLoader<T> {
             } else {
                 clazz = Class.forName(className);
             }
-            EXTENSION_CLASSES.putIfAbsent(key, clazz);
+            extensionClasses.putIfAbsent(key, clazz);
         } catch (Exception e) {
             log.error("We load class {} fail while getting instance of type {}.", key, className);
         }

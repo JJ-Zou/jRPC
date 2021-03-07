@@ -1,6 +1,7 @@
 package com.zjj.transport.support;
 
 import com.zjj.common.JRpcURL;
+import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.transport.Server;
 import com.zjj.transport.TransChannel;
 
@@ -37,11 +38,11 @@ public abstract class AbstractServer implements Server {
 
     @Override
     public Collection<TransChannel> getChannels() {
-        throw new IllegalStateException(this.getClass().getName() + " method getChannels unsupported " + url);
+        throw new JRpcFrameworkException(this.getClass().getName() + " method getChannels unsupported " + url);
     }
 
     @Override
     public TransChannel getChannel(InetSocketAddress remoteAddress) {
-        throw new IllegalStateException(this.getClass().getName() + " method getChannel(InetSocketAddress) unsupported " + url);
+        throw new JRpcFrameworkException(this.getClass().getName() + " method getChannel(InetSocketAddress) unsupported " + url);
     }
 }

@@ -17,7 +17,6 @@ public interface Request {
 
     void setAttachment(String key, String value);
 
-
     boolean containsAttachment(String key);
 
     String getAttachment(String key);
@@ -30,7 +29,7 @@ public interface Request {
 
     byte getProtocolVersion();
 
-    void setProtocolVersion();
+    void setProtocolVersion(byte protocolVersion);
 
     int getSerializeNumber();
 

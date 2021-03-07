@@ -2,6 +2,7 @@ package com.zjj.transport.netty.server;
 
 import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.executor.StandardThreadPoolExecutor;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
@@ -111,7 +112,7 @@ public class NettyServer extends AbstractServer {
 
     @Override
     public Response request(Request request) throws IOException {
-        throw new IllegalStateException("NettyServer method request(Request) unsupported.");
+        throw new JRpcFrameworkException("NettyServer method request(Request) unsupported.");
     }
 
     @Override
@@ -147,15 +148,5 @@ public class NettyServer extends AbstractServer {
     @Override
     public JRpcURL getUrl() {
         return url;
-    }
-
-    public static void main(String[] args) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("address", "39.105.65.104:2181");
-        parameters.put(JRpcURLParamType.registryRetryPeriod.getName(), "1000");
-        JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
-
-        NettyServer nettyServer = new NettyServer(jRpcURL, null);
-        nettyServer.open();
     }
 }

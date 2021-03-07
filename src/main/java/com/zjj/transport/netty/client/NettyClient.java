@@ -2,6 +2,8 @@ package com.zjj.transport.netty.client;
 
 import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.exception.JRpcErrorMessage;
+import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.transport.TransChannel;
@@ -29,10 +31,9 @@ public class NettyClient extends AbstractClient {
 
     private volatile ChannelState state = ChannelState.UNINITIALIZED;
 
-    protected NettyClient(JRpcURL url) {
+    public NettyClient(JRpcURL url) {
         super(url);
     }
-
 
     @Override
     public boolean open() {
@@ -86,7 +87,7 @@ public class NettyClient extends AbstractClient {
     @Override
     public Response request(Request request) throws IOException {
         if (!isAvailable()) {
-            throw new IllegalStateException("NettyClient is unavailable.");
+            throw new JRpcFrameworkException("NettyClient is unavailable.", JRpcErrorMessage.FRAMEWORK_INIT_ERROR);
         }
 
         return request(request, false);

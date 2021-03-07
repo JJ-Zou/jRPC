@@ -1,6 +1,6 @@
 package com.zjj.config;
 
-import com.zjj.common.utils.Utils;
+import com.zjj.common.utils.ReflectUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ public abstract class AbstractConfig implements Serializable {
             builder.append("<jrpc:")
                     .append(getTagName(getClass()));
             for (Method method : getClass().getMethods()) {
-                if (!Utils.isGetter(method)) {
+                if (!ReflectUtils.isGetter(method)) {
                     continue;
                 }
                 try {

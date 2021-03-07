@@ -1,4 +1,4 @@
-package com.zjj.rpc;
+package com.zjj.protocol;
 
 public enum ProtocolVersion {
     VERSION_1((byte) 1, 16),

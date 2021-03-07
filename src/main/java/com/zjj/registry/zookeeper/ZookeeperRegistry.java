@@ -1,7 +1,8 @@
 package com.zjj.registry.zookeeper;
 
 import com.zjj.common.JRpcURL;
-import com.zjj.common.JRpcURLParamType;
+import com.zjj.exception.JRpcErrorMessage;
+import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.registry.ServiceListener;
 import com.zjj.registry.support.ServiceFailbackRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -185,7 +186,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
             deletePath(path);
             createEphemeral(path);
         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new JRpcFrameworkException(e.getMessage(), e, JRpcErrorMessage.FRAMEWORK_REGISTER_ERROR);
         }
     }
 
@@ -195,7 +196,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
         } catch (NodeExistsException e) {
             log.warn("ZNode {} already exist.", path, e);
         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new JRpcFrameworkException(e.getMessage(), e, JRpcErrorMessage.FRAMEWORK_REGISTER_ERROR);
         }
     }
 
@@ -233,7 +234,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
             deletePath(path);
             createEphemeral(path, data);
         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new JRpcFrameworkException(e.getMessage(), e, JRpcErrorMessage.FRAMEWORK_REGISTER_ERROR);
         }
     }
 
@@ -248,7 +249,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
                 throw new IllegalStateException(e.getMessage(), e);
             }
         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new JRpcFrameworkException(e.getMessage(), e, JRpcErrorMessage.FRAMEWORK_REGISTER_ERROR);
         }
     }
 
@@ -258,7 +259,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
         } catch (NoNodeException e) {
 
         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new JRpcFrameworkException(e.getMessage(), e, JRpcErrorMessage.FRAMEWORK_REGISTER_ERROR);
         }
     }
 
@@ -279,7 +280,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
         } catch (NoNodeException e) {
 
         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new JRpcFrameworkException(e.getMessage(), e, JRpcErrorMessage.FRAMEWORK_REGISTER_ERROR);
         }
         return null;
     }
@@ -290,7 +291,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
         } catch (NoNodeException e) {
             return Collections.emptyList();
         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new JRpcFrameworkException(e.getMessage(), e, JRpcErrorMessage.FRAMEWORK_REGISTER_ERROR);
         }
     }
 

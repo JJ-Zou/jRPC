@@ -18,15 +18,37 @@ public enum JRpcURLParamType {
     clientInitConnections("clientInitConnections", 2),
     isAsyncInitConnections("isAsyncInitConnections", false),
     connectTimeoutMills("connectTimeoutMills", 5000),
+    retries("retries", 0),
+    requestIdFromClient("requestIdFromClient", 0),
+    heartBeatPeriod("heartBeatPeriod", 500),
+    requestFlag("requestFlag", (byte) 0b00000000),
+    responseFlag("responseFlag", (byte) 0b00000001),
+    responseVoid("responseVoid", (byte) 0b00000011),
+    responseException("responseException", (byte) 0b00000101),
+    flagMask("flagMask", (byte) 0b00000111),
+    magicNum("magicNum", (short) 0xabcd),
+    host("host", ""),
     ;
     private String name;
     private String value;
+    private byte byteValue;
+    private short shortValue;
     private int intValue;
     private boolean booleanValue;
 
     JRpcURLParamType(String name, String value) {
         this.name = name;
         this.value = value;
+    }
+
+    JRpcURLParamType(String name, byte byteValue) {
+        this.name = name;
+        this.byteValue = byteValue;
+    }
+
+    JRpcURLParamType(String name, short shortValue) {
+        this.name = name;
+        this.shortValue = shortValue;
     }
 
     JRpcURLParamType(String name, int intValue) {
@@ -49,6 +71,14 @@ public enum JRpcURLParamType {
 
     public int getIntValue() {
         return intValue;
+    }
+
+    public byte getByteValue() {
+        return byteValue;
+    }
+
+    public short getShortValue() {
+        return shortValue;
     }
 
     public boolean isBooleanValue() {

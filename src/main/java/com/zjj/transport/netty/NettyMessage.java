@@ -1,6 +1,6 @@
 package com.zjj.transport.netty;
 
-import com.zjj.rpc.ProtocolVersion;
+import com.zjj.protocol.ProtocolVersion;
 import lombok.Getter;
 import lombok.Setter;
 

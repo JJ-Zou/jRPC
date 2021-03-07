@@ -1,0 +1,1 @@
+endPointFactory=com.zjj.transport.netty.server.NettyEndPointFactory

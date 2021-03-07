@@ -2,6 +2,8 @@ package com.zjj.transport.support;
 
 import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.exception.JRpcErrorMessage;
+import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.rpc.Request;
 import com.zjj.transport.Client;
 import com.zjj.transport.TransChannel;
@@ -30,7 +32,7 @@ public abstract class AbstractClient implements Client {
         this.remoteAddress = new InetSocketAddress(url.getHost(), url.getPort());
         this.clientInitConnections = url.getParameter(JRpcURLParamType.clientInitConnections.getName(), JRpcURLParamType.clientInitConnections.getIntValue());
         if (clientInitConnections <= 0) {
-            throw new IllegalArgumentException("clientInitConnections = 0.");
+            throw new JRpcFrameworkException("clientInitConnections = 0.", JRpcErrorMessage.FRAMEWORK_INIT_ERROR);
         }
         this.transChannels = new TransChannel[clientInitConnections];
     }
@@ -86,7 +88,7 @@ public abstract class AbstractClient implements Client {
 
     @Override
     public void heartbeat(Request request) {
-        throw new IllegalStateException(this.getClass().getName() + " method heartbeat unsupported " + request);
+        throw new JRpcFrameworkException(this.getClass().getName() + " method heartbeat unsupported " + request);
     }
 
     @Override

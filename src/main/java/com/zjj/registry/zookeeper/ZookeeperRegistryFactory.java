@@ -2,6 +2,8 @@ package com.zjj.registry.zookeeper;
 
 import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.exception.JRpcErrorMessage;
+import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.registry.Registry;
 import com.zjj.registry.support.AbstractRegistryFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -9,8 +11,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -36,7 +36,7 @@ public class ZookeeperRegistryFactory extends AbstractRegistryFactory {
             }
             return new ZookeeperRegistry(registryUrl, zkClient);
         } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage(), e);
+            throw new JRpcFrameworkException(e.getMessage(), e, JRpcErrorMessage.FRAMEWORK_INIT_ERROR);
         }
     }
 }

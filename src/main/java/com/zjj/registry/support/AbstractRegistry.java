@@ -1,6 +1,7 @@
 package com.zjj.registry.support;
 
 import com.zjj.common.JRpcURL;
+import com.zjj.common.JRpcURLParamType;
 import com.zjj.registry.NotifyListener;
 import com.zjj.registry.Registry;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class AbstractRegistry implements Registry {
@@ -110,7 +112,10 @@ public abstract class AbstractRegistry implements Registry {
         if (listener == null || urls == null) {
             return;
         }
-
+        Map<String, List<JRpcURL>> nodeTypeUrls = urls.stream().collect(Collectors.groupingBy(url ->
+                url.getParameter(JRpcURLParamType.nodeType.getName(), JRpcURLParamType.nodeType.getValue())));
+        subscribedResponses.computeIfAbsent(refUrl, m -> new ConcurrentHashMap<>()).putAll(nodeTypeUrls);
+        nodeTypeUrls.values().forEach(us -> listener.notify(getRegistryUrl(), us));
     }
 
     protected List<JRpcURL> getCachedUrls(JRpcURL url) {
