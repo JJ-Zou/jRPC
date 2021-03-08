@@ -4,7 +4,7 @@ import com.zjj.common.JRpcURLParamType;
 
 import java.util.Map;
 
-public interface Request {
+public interface Request extends Message{
     String getInterfaceName();
 
     String getMethodName();

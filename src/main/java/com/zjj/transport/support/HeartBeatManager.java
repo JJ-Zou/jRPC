@@ -4,15 +4,15 @@ import com.zjj.common.JRpcURLParamType;
 import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.extension.ExtensionLoader;
 import com.zjj.transport.Client;
-import com.zjj.transport.EndPoint;
-import com.zjj.transport.EndPointManager;
+import com.zjj.transport.Endpoint;
+import com.zjj.transport.EndpointManager;
 import com.zjj.transport.HeartBeatFactory;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.*;
 
 @Slf4j
-public class HeartBeatManager implements EndPointManager {
+public class HeartBeatManager implements EndpointManager {
     private static final ConcurrentMap<Client, HeartBeatFactory> HEART_BEAT_FACTORIES = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService executor;
@@ -45,7 +45,7 @@ public class HeartBeatManager implements EndPointManager {
     }
 
     @Override
-    public void addEndPoint(EndPoint endPoint) {
+    public void addEndPoint(Endpoint endPoint) {
         if (!(endPoint instanceof Client)) {
             throw new JRpcFrameworkException("HeartBeatManager addEndPoint error, unsupported type " + endPoint.getClass());
         }
@@ -54,7 +54,7 @@ public class HeartBeatManager implements EndPointManager {
     }
 
     @Override
-    public void removeEndPoint(EndPoint endPoint) {
+    public void removeEndPoint(Endpoint endPoint) {
         if (!(endPoint instanceof Client)) {
             throw new JRpcFrameworkException("HeartBeatManager removeEndPoint error, unsupported type " + endPoint.getClass());
         }

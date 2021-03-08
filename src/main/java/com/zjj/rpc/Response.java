@@ -2,7 +2,7 @@ package com.zjj.rpc;
 
 import java.util.Map;
 
-public interface Response {
+public interface Response extends Message{
     Object getValue();
 
     Exception getException();

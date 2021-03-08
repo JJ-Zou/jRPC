@@ -25,7 +25,7 @@ public class DefaultRequest implements Request, Serializable {
     private Map<String, String> attachments;
     private int retries;
     private long requestId;
-    private byte protocolVersion = ProtocolVersion.VERSION_1.getVersion();
+    private byte protocolVersion = ProtocolVersion.DEFAULT_VERSION.getVersion();
     private int serializeNumber = 0;
 
 

@@ -6,11 +6,11 @@ import com.zjj.transport.*;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbstractEndPointFactory implements EndpointFactory {
+public abstract class AbstractEndpointFactory implements EndpointFactory {
 
-    private final EndPointManager endPointManager;
+    private final EndpointManager endPointManager;
 
-    protected AbstractEndPointFactory() {
+    protected AbstractEndpointFactory() {
         endPointManager = new HeartBeatManager();
     }
 
@@ -41,7 +41,7 @@ public abstract class AbstractEndPointFactory implements EndpointFactory {
         destroy(client);
     }
 
-    private void destroy(EndPoint endPoint) {
+    private void destroy(Endpoint endPoint) {
         endPointManager.removeEndPoint(endPoint);
         endPoint.close();
     }

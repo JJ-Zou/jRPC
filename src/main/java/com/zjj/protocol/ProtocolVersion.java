@@ -1,7 +1,8 @@
 package com.zjj.protocol;
 
 public enum ProtocolVersion {
-    VERSION_1((byte) 1, 16),
+    DEFAULT_VERSION((byte) 1, 16),
+    NETTY_VERSION((byte) 2, 16),
     ;
 
     private final byte version;

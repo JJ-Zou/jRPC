@@ -23,7 +23,7 @@ public class DefaultResponse implements Response, Serializable {
     private long processTime;
     private int timeout;
     private Map<String, String> attachments;
-    private byte protocolVersion = ProtocolVersion.VERSION_1.getVersion();
+    private byte protocolVersion = ProtocolVersion.DEFAULT_VERSION.getVersion();
     private int serializeNumber = 0;
 
     public DefaultResponse(Object value) {

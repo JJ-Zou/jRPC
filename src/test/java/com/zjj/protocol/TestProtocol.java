@@ -1,11 +1,15 @@
 package com.zjj.protocol;
 
+import com.zjj.HelloService;
+import com.zjj.HelloServiceImpl;
 import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.common.utils.ReflectUtils;
 import com.zjj.protocol.support.DefaultProtocol;
 import com.zjj.rpc.Provider;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
+import com.zjj.rpc.message.DefaultResponse;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -14,12 +18,72 @@ import java.util.Map;
 
 public class TestProtocol {
 
+    public static void main(String[] args) {
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put("address", "39.105.65.104:2181");
+        parameters.put(JRpcURLParamType.registryRetryPeriod.getName(), "1000");
+        JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.HelloService", parameters);
+
+        DefaultProtocol protocol = new DefaultProtocol();
+        final HelloServiceImpl helloService = new HelloServiceImpl();
+        protocol.export(new Provider<HelloService>() {
+            @Override
+            public Method lookupMethod(String methodName, String methodParameterSign) {
+                try {
+                    return helloService.getClass().getMethod(methodName, ReflectUtils.fromClassName(methodParameterSign));
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            public HelloService getImpl() {
+                return helloService;
+            }
+
+            @Override
+            public Class<HelloService> getInterface() {
+                return HelloService.class;
+            }
+
+            @Override
+            public Response call(Request request) {
+                return DefaultResponse.builder().value(request.getRequestId()).protocolVersion(request.getProtocolVersion())
+                        .requestId(request.getRequestId()).serializeNumber(0).build();
+            }
+
+            @Override
+            public void init() {
+            }
+
+            @Override
+            public void destroy() {
+
+            }
+
+            @Override
+            public boolean isAvailable() {
+                return true;
+            }
+
+            @Override
+            public String desc() {
+                return "null";
+            }
+
+            @Override
+            public JRpcURL getUrl() {
+                return jRpcURL;
+            }
+        }, jRpcURL);
+    }
     @Test
     public void testDefaultProtocol() {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("address", "39.105.65.104:2181");
         parameters.put(JRpcURLParamType.registryRetryPeriod.getName(), "1000");
-        JRpcURL jRpcURL = new JRpcURL("META_INF/jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
+        JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
 
         DefaultProtocol protocol = new DefaultProtocol();
         protocol.export(new Provider<String>() {

@@ -34,9 +34,7 @@ public class DefaultHeartBeatFactory implements HeartBeatFactory {
                 return messageHandler.handler(transChannel, message);
             }
             Request request = (Request) message;
-            Response heartBeatResponse = createHeartBeatResponse(request.getRequestId());
-            heartBeatResponse.setProtocolVersion(request.getProtocolVersion());
-            return heartBeatResponse;
+            return createHeartBeatResponse(request);
         }
     }
 
@@ -49,10 +47,11 @@ public class DefaultHeartBeatFactory implements HeartBeatFactory {
         return request;
     }
 
-    public static Response createHeartBeatResponse(long requestId) {
+    public static Response createHeartBeatResponse(Request request) {
         HeartBeatResponse response = new HeartBeatResponse();
-        response.setRequestId(requestId);
+        response.setRequestId(request.getRequestId());
         response.setValue("heartbeat");
+        response.setProtocolVersion(request.getProtocolVersion());
         return response;
     }
 

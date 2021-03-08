@@ -6,11 +6,15 @@ import com.zjj.exception.JRpcErrorMessage;
 import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
+import com.zjj.rpc.ResponseFuture;
 import com.zjj.transport.TransChannel;
 import com.zjj.transport.netty.ChannelState;
+import com.zjj.transport.netty.NettyChannelHandler;
+import com.zjj.transport.netty.NettyCodec;
 import com.zjj.transport.support.AbstractClient;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -19,17 +23,19 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 
 @Slf4j
 public class NettyClient extends AbstractClient {
 
-    private Bootstrap bootstrap;
-    private NioEventLoopGroup eventLoopGroup;
+    private final ConcurrentMap<Long, ResponseFuture<?>> callbackMap = new ConcurrentHashMap<>();
 
     private volatile ChannelState state = ChannelState.UNINITIALIZED;
+    private Bootstrap bootstrap;
+    private NioEventLoopGroup eventLoopGroup;
+    private ChannelHandler handler;
 
     public NettyClient(JRpcURL url) {
         super(url);
@@ -44,6 +50,22 @@ public class NettyClient extends AbstractClient {
         try {
             bootstrap = new Bootstrap();
             eventLoopGroup = new NioEventLoopGroup();
+            handler = new NettyChannelHandler(this, (c, o) -> {
+                Response response = (Response) o;
+                ResponseFuture<?> responseFuture = removeCallback(response.getRequestId());
+                if (responseFuture == null) {
+                    log.warn("Netty client has response from server but get null, request id = {}", response.getRequestId());
+                    return null;
+                }
+                if (responseFuture.getException() == null) {
+                    log.info("Netty client get success responseFuture process time {}ms", responseFuture.getProcessTime());
+                    responseFuture.onSuccess(response);
+                } else {
+                    log.warn("Netty client get failure responseFuture process time {}ms", responseFuture.getProcessTime());
+                    responseFuture.onFailure(response);
+                }
+                return null;
+            });
             int connectTimeoutMills = getUrl().getParameter(JRpcURLParamType.connectTimeoutMills.getName(), JRpcURLParamType.connectTimeoutMills.getIntValue());
             bootstrap.group(eventLoopGroup)
                     .channel(NioSocketChannel.class)
@@ -53,7 +75,9 @@ public class NettyClient extends AbstractClient {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast();
+                            ch.pipeline()
+                                    .addLast("client-codec", new NettyCodec())
+                                    .addLast("client-handler", handler);
                         }
                     });
             initialize();
@@ -110,6 +134,7 @@ public class NettyClient extends AbstractClient {
             return;
         }
         closeAll();
+        callbackMap.clear();
         eventLoopGroup.shutdownGracefully();
         state = ChannelState.CLOSED;
         log.info("NettyClient closed.");
@@ -126,13 +151,12 @@ public class NettyClient extends AbstractClient {
         return state.isActive();
     }
 
-    public static void main(String[] args) {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("address", "39.105.65.104:2181");
-        parameters.put(JRpcURLParamType.registryRetryPeriod.getName(), "1000");
-        JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
-
-        NettyClient nettyClient = new NettyClient(jRpcURL);
-        nettyClient.open();
+    public void registerCallback(long requestId, ResponseFuture<?> responseFuture) {
+        callbackMap.put(requestId, responseFuture);
     }
+
+    public ResponseFuture removeCallback(long requestId) {
+        return callbackMap.remove(requestId);
+    }
+
 }

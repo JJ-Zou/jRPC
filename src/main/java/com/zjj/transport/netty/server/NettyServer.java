@@ -9,12 +9,10 @@ import com.zjj.rpc.Response;
 import com.zjj.transport.MessageHandler;
 import com.zjj.transport.netty.ChannelState;
 import com.zjj.transport.netty.NettyChannelHandler;
+import com.zjj.transport.netty.NettyCodec;
 import com.zjj.transport.support.AbstractServer;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -23,8 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -36,7 +32,7 @@ public class NettyServer extends AbstractServer {
     private volatile ChannelState state = ChannelState.UNINITIALIZED;
 
     private NettyServerChannelManager channelManager;
-    private NettyChannelHandler handler;
+    private ChannelHandler handler;
     private StandardThreadPoolExecutor executor;
 
     private ServerBootstrap bootstrap;
@@ -94,7 +90,9 @@ public class NettyServer extends AbstractServer {
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast("server-channel-manager", channelManager)
+                        ch.pipeline()
+                                .addLast("client-codec", new NettyCodec())
+                                .addLast("server-channel-manager", channelManager)
                                 .addLast("server-handler", handler);
                     }
                 });

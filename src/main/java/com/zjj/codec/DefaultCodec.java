@@ -10,7 +10,6 @@ import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.rpc.message.DefaultRequest;
 import com.zjj.rpc.message.DefaultResponse;
-import com.zjj.transport.TransChannel;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,7 @@ import java.util.Map;
 @Slf4j
 public class DefaultCodec extends AbstractCodec {
     @Override
-    public byte[] encode(TransChannel channel, Object message) throws IOException {
+    public byte[] encode(Object message) throws IOException {
         if (message instanceof Request) {
             return encodeRequest((Request) message);
         }
@@ -92,23 +91,30 @@ public class DefaultCodec extends AbstractCodec {
     }
 
     private byte[] encode(byte[] body, byte flag, long requestId) {
-        int headLen = ProtocolVersion.VERSION_1.getHeadLength();
+        int headLen = ProtocolVersion.DEFAULT_VERSION.getHeadLength();
         int bodyLen = body.length;
         ByteBuf buffer = Unpooled.buffer(headLen + bodyLen);
         short magic = JRpcURLParamType.magicNum.getShortValue();
         buffer.writeShort(magic);
-        byte version = ProtocolVersion.VERSION_1.getVersion();
+        byte version = ProtocolVersion.DEFAULT_VERSION.getVersion();
         buffer.writeByte(version);
         buffer.writeByte(flag);
         buffer.writeLong(requestId);
         buffer.writeInt(bodyLen);
         buffer.writeBytes(body);
-        return buffer.array();
+        int readableBytes = buffer.readableBytes();
+        if (readableBytes < bodyLen) {
+            throw new JRpcFrameworkException("DefaultCodec decode error, readable bytes < bodyLen", JRpcErrorMessage.FRAMEWORK_DECODE_ERROR);
+        }
+        byte[] bytes = new byte[readableBytes];
+        buffer.readBytes(bytes);
+        return bytes;
     }
 
+
     @Override
-    public Object decode(TransChannel channel, byte[] bytes) throws IOException {
-        int headLen = ProtocolVersion.VERSION_1.getHeadLength();
+    public Object decode(byte[] bytes) throws IOException {
+        int headLen = ProtocolVersion.DEFAULT_VERSION.getHeadLength();
         if (bytes.length <= headLen) {
             throw new JRpcFrameworkException("DefaultCodec decode error, lack length.", JRpcErrorMessage.FRAMEWORK_DECODE_ERROR);
         }
@@ -118,10 +124,10 @@ public class DefaultCodec extends AbstractCodec {
             throw new JRpcFrameworkException("DefaultCodec decode error, magic error.", JRpcErrorMessage.FRAMEWORK_DECODE_ERROR);
         }
         byte version = byteBuf.readByte();
-        if (version != ProtocolVersion.VERSION_1.getVersion()) {
+        if (version != ProtocolVersion.DEFAULT_VERSION.getVersion()) {
             throw new JRpcFrameworkException("DefaultCodec decode error, version error.", JRpcErrorMessage.FRAMEWORK_DECODE_ERROR);
         }
-        byte flag = (byte) (byteBuf.readByte() & JRpcURLParamType.flagMask.getByteValue());
+        byte flag = byteBuf.readByte();
         boolean isRequest = flag == JRpcURLParamType.requestFlag.getByteValue();
         long requestId = byteBuf.readLong();
         int bodyLen = byteBuf.readInt();

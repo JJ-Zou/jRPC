@@ -25,11 +25,13 @@ public enum JRpcURLParamType {
     responseFlag("responseFlag", (byte) 0b00000001),
     responseVoid("responseVoid", (byte) 0b00000011),
     responseException("responseException", (byte) 0b00000101),
-    flagMask("flagMask", (byte) 0b00000111),
     magicNum("magicNum", (short) 0xabcd),
     host("host", ""),
+    nettyMagicNum("nettyMagicNum", (short) 0xdcba),
+    requestTimeout("requestTimeout", 200),
+    throwException("throwException", true),
     ;
-    private String name;
+    private final String name;
     private String value;
     private byte byteValue;
     private short shortValue;

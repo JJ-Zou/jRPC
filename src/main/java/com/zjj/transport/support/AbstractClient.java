@@ -57,6 +57,7 @@ public abstract class AbstractClient implements Client {
                 transChannels[index] = new NettyChannel((NettyClient) this);
             }
             if (transChannels[index].isAvailable()) {
+                log.info("Client obtain an available channel {}", transChannels[index]);
                 return transChannels[index];
             }
             index = (index + 1) % clientInitConnections;

@@ -4,13 +4,21 @@ import com.zjj.clutter.Clutter;
 import com.zjj.clutter.HaStrategy;
 import com.zjj.clutter.LoadBalance;
 import com.zjj.common.JRpcURL;
+import com.zjj.common.JRpcURLParamType;
+import com.zjj.exception.AbstractJRpcException;
+import com.zjj.exception.JRpcServiceConsumerException;
+import com.zjj.exception.JRpcServiceProviderException;
 import com.zjj.rpc.Reference;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
+import com.zjj.rpc.message.DefaultResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -45,7 +53,7 @@ public class DefaultClutter<T> implements Clutter<T> {
             return;
         }
         old.removeAll(references);
-        //todo
+        ClutterDestroy.delayDestroy(old);
     }
 
 
@@ -62,8 +70,18 @@ public class DefaultClutter<T> implements Clutter<T> {
     }
 
     private Response callFalse(Request request, Exception e) {
-        throw new IllegalStateException(request.toString(), e);
-        //todo
+        if (e instanceof JRpcServiceConsumerException) {
+            throw (RuntimeException) e;
+        }
+        boolean thrown = getUrl().getParameter(JRpcURLParamType.throwException.getName(), JRpcURLParamType.throwException.isBooleanValue());
+        if (thrown) {
+            if (e instanceof AbstractJRpcException) {
+                throw (AbstractJRpcException) e;
+            } else {
+                throw new JRpcServiceProviderException(e);
+            }
+        }
+        return DefaultResponse.builder().exception(e).requestId(request.getRequestId()).protocolVersion(request.getProtocolVersion()).build();
     }
 
     @Override
@@ -130,5 +148,17 @@ public class DefaultClutter<T> implements Clutter<T> {
                 ", references=" + references +
                 ", url=" + url +
                 '}';
+    }
+
+    private static class ClutterDestroy {
+
+        private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(10);
+
+        private static final int DELAY_TIME = 1000;
+
+        public static <T> void delayDestroy(List<Reference<T>> references) {
+            references.forEach(r -> EXECUTOR.schedule(r::destroy, DELAY_TIME, TimeUnit.MILLISECONDS));
+        }
+
     }
 }

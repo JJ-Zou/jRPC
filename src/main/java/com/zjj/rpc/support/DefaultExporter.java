@@ -55,8 +55,6 @@ public class DefaultExporter<T> extends AbstractExporter<T> {
 
     protected ProviderRouter obtainProviderRouter(JRpcURL url) {
         String address = url.getAddress();
-        ProviderRouter providerRouter = PROVIDER_ROUTERS.computeIfAbsent(address, p -> new ProviderRouter(url));
-        providerRouter.addProvider(provider);
-        return providerRouter;
+        return PROVIDER_ROUTERS.computeIfAbsent(address, p -> new ProviderRouter(provider));
     }
 }

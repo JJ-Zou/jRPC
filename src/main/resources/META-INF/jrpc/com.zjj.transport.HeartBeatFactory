@@ -1,1 +1,1 @@
-EndPointFactory=com.zjj.transport.support.NettyEndPointFactory
+heartBeatFactory=com.zjj.transport.support.DefaultHeartBeatFactory

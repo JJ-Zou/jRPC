@@ -1,14 +1,16 @@
 package com.zjj.rpc.support;
 
-import com.zjj.common.JRpcURL;
 import com.zjj.common.utils.ReflectUtils;
 import com.zjj.exception.JRpcErrorMessage;
 import com.zjj.exception.JRpcServiceProviderException;
+import com.zjj.extension.ExtensionLoader;
 import com.zjj.rpc.Provider;
+import com.zjj.rpc.ProviderProtectedStrategy;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.rpc.message.DefaultRequest;
 import com.zjj.rpc.message.DefaultResponse;
+import com.zjj.serialize.Serialization;
 import com.zjj.transport.MessageHandler;
 import com.zjj.transport.TransChannel;
 import lombok.extern.slf4j.Slf4j;
@@ -25,15 +27,17 @@ import java.util.stream.Stream;
 
 @Slf4j
 public class ProviderRouter implements MessageHandler {
+
     protected static final ConcurrentMap<String, Provider<?>> providers = new ConcurrentHashMap<>();
+    private static final Serialization serialization = ExtensionLoader.getExtensionLoader(Serialization.class).getDefaultExtension();
 
     protected final AtomicInteger methodNum = new AtomicInteger(0);
 
-    public ProviderRouter(JRpcURL url) {
-    }
+    private final ProviderProtectedStrategy strategy;
 
     public ProviderRouter(Provider<?> provider) {
         addProvider(provider);
+        strategy = ExtensionLoader.getExtensionLoader(ProviderProtectedStrategy.class).getDefaultExtension();
     }
 
     public void addProvider(Provider<?> provider) {
@@ -68,20 +72,19 @@ public class ProviderRouter implements MessageHandler {
         String serviceKey = request.getServiceKey();
         Provider<?> provider = providers.get(serviceKey);
         if (provider == null) {
-            log.error("{} handler request {} error, provider not exist service key = {}.", this.getClass().getSimpleName(), request, serviceKey);
+            log.error("{} handler request [{}] error, provider not exist service key = {}.", this.getClass().getSimpleName(), request, serviceKey);
             IllegalStateException exception = new IllegalStateException(this.getClass().getSimpleName() + " handler request " + request + " error, provider not exist service key = " + serviceKey + ".");
             return DefaultResponse.builder().exception(exception).requestId(request.getRequestId()).protocolVersion(request.getProtocolVersion()).build();
         }
         Method method = provider.lookupMethod(request.getMethodName(), request.getParameterSign());
-        appendMethodSing(request, method);
-//todo
+        appendMethodSign(request, method);
         Response response = call(request, provider);
         response.setProtocolVersion(request.getProtocolVersion());
         response.setSerializeNumber(request.getSerializeNumber());
         return response;
     }
 
-    private void appendMethodSing(Request request, Method method) {
+    private void appendMethodSign(Request request, Method method) {
         if (method == null || !(request instanceof DefaultRequest) || !StringUtils.isBlank(request.getParameterSign())) {
             return;
         }
@@ -91,7 +94,7 @@ public class ProviderRouter implements MessageHandler {
 
     private Response call(Request request, Provider<?> provider) {
         try {
-            return new DefaultResponse();
+            return strategy.call(request, provider);
         } catch (Exception e) {
             return DefaultResponse.builder()
                     .exception(new IllegalStateException("provider call process error", e))

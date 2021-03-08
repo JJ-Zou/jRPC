@@ -36,8 +36,8 @@ public class TestCodec {
                 .attachments(new HashMap<>())
                 .requestId(RequestIdUtils.getRequestId())
                 .build();
-        byte[] encode = codec.encode(null, request);
-        DefaultRequest decode = (DefaultRequest) codec.decode(null, encode);
+        byte[] encode = codec.encode(request);
+        DefaultRequest decode = (DefaultRequest) codec.decode(encode);
         System.out.println(decode);
     }
 

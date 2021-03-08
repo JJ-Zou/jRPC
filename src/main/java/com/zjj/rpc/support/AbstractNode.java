@@ -19,8 +19,8 @@ public abstract class AbstractNode implements Node {
 
     @Override
     public void init() {
-        if (!init.get()) {
-            log.warn("{} has been initialized.", this);
+        if (init.get()) {
+            log.warn("{} has already been initialized.", this);
         }
         try {
             boolean success = doInit();

@@ -1,11 +1,19 @@
 package com.zjj.transport.netty.client;
 
 import com.zjj.common.JRpcURL;
+import com.zjj.common.JRpcURLParamType;
+import com.zjj.exception.JRpcErrorMessage;
+import com.zjj.exception.JRpcFrameworkException;
+import com.zjj.exception.JRpcServiceConsumerException;
+import com.zjj.exception.JRpcServiceProviderException;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
+import com.zjj.rpc.ResponseFuture;
+import com.zjj.rpc.support.DefaultResponseFuture;
 import com.zjj.transport.TransChannel;
 import com.zjj.transport.netty.ChannelState;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -20,7 +28,6 @@ public class NettyChannel implements TransChannel {
     private final NettyClient nettyClient;
 
     private Channel channel;
-
     private InetSocketAddress localAddress;
     private final InetSocketAddress remoteAddress;
 
@@ -31,8 +38,31 @@ public class NettyChannel implements TransChannel {
 
     @Override
     public Response request(Request request) throws IOException {
-        //todo:
-        return null;
+        int requestTimeout = getUrl().getMethodParameter(request.getMethodName(), request.getParameterSign(),
+                JRpcURLParamType.requestTimeout.getName(), JRpcURLParamType.requestTimeout.getIntValue());
+        if (requestTimeout <= 0) {
+            throw new JRpcFrameworkException("method request timeout cannot less than or equal zero.", JRpcErrorMessage.FRAMEWORK_INIT_ERROR);
+        }
+        ResponseFuture<?> responseFuture = new DefaultResponseFuture<>(getUrl(), requestTimeout, request);
+        nettyClient.registerCallback(request.getRequestId(), responseFuture);
+        ChannelFuture writeFuture = channel.writeAndFlush(request);
+        boolean result = writeFuture.awaitUninterruptibly(requestTimeout);
+        if (result) {
+            responseFuture.addListener(f -> {
+                if (f.isSuccess() || (responseFuture.getException() instanceof JRpcServiceConsumerException)) {
+// TODO: 2021/3/8 成功回调
+                    log.info("成功回调");
+                } else {
+// TODO: 2021/3/8 失败回调
+                    log.info("失败回调");
+                }
+            });
+            return responseFuture;
+        }
+        writeFuture.cancel(true);
+        responseFuture.cancel();
+        log.error("NettyChannel request [{}] error, url: [{}]", request, getUrl());
+        throw new JRpcServiceProviderException(writeFuture.cause());
     }
 
     @Override
@@ -87,5 +117,16 @@ public class NettyChannel implements TransChannel {
     @Override
     public InetSocketAddress getRemoteAddress() {
         return remoteAddress;
+    }
+
+    @Override
+    public String toString() {
+        return "NettyChannel{" +
+                "state=" + state +
+                ", nettyClient=" + nettyClient +
+                ", channel=" + channel +
+                ", localAddress=" + localAddress +
+                ", remoteAddress=" + remoteAddress +
+                '}';
     }
 }
