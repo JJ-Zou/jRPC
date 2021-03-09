@@ -50,4 +50,7 @@ public abstract class AbstractJRpcException extends RuntimeException {
         return errMsg + ", id = " + RpcContext.getRpcContext().getRequestId();
     }
 
+    public JRpcErrorMessage getErrorMessage() {
+        return errorMessage;
+    }
 }

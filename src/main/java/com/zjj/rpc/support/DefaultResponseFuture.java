@@ -1,13 +1,10 @@
 package com.zjj.rpc.support;
 
 import com.zjj.common.JRpcURL;
-import com.zjj.exception.JRpcFrameworkException;
+import com.zjj.exception.JRpcErrorMessage;
 import com.zjj.exception.JRpcServiceProviderException;
-import com.zjj.extension.ExtensionLoader;
 import com.zjj.rpc.*;
-import com.zjj.serialize.Serialization;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +48,10 @@ public class DefaultResponseFuture<V> extends ResponseFuture<V> {
 
     @Override
     public void onFailure(Response response) {
+        if (exception != null &&
+                ((exception instanceof JRpcServiceProviderException) && ((JRpcServiceProviderException) exception).getErrorMessage() == JRpcErrorMessage.SERVICE_TIMEOUT_ERROR)) {
+            return;
+        }
         this.exception = response.getException();
         this.processTime = response.getProcessTime();
         done();
@@ -69,6 +70,7 @@ public class DefaultResponseFuture<V> extends ResponseFuture<V> {
         }
         return false;
     }
+
 
     private void notifyListeners() {
         listeners.forEach(this::notifyListener);
@@ -119,22 +121,6 @@ public class DefaultResponseFuture<V> extends ResponseFuture<V> {
         listeners.add(listener);
     }
 
-    @Override
-    public boolean cancel() {
-        if (RESULT_UPDATE.compareAndSet(this, RUNNING, CANCELED)) {
-            this.processTime = System.currentTimeMillis() - createTime;
-            this.exception = new JRpcServiceProviderException(this.getClass().getSimpleName() + " cancel this task: " + request + ", cost " + (System.currentTimeMillis() - createTime) + "ms");
-            notifyListeners();
-            try {
-                lock.lock();
-                condition.signalAll();
-            } finally {
-                lock.unlock();
-            }
-            return true;
-        }
-        return false;
-    }
 
     @SuppressWarnings("unchecked")
     @Override
@@ -158,12 +144,45 @@ public class DefaultResponseFuture<V> extends ResponseFuture<V> {
                         waitTime = timeout - (System.currentTimeMillis() - createTime);
                     }
                 }
-                cancel();
+                timeoutCancel();
             }
             return (V) getValueOrThrowable();
         } finally {
             lock.unlock();
         }
+    }
+
+    private boolean timeoutCancel() {
+        if (RESULT_UPDATE.compareAndSet(this, RUNNING, CANCELED)) {
+            this.processTime = System.currentTimeMillis() - createTime;
+            this.exception = new JRpcServiceProviderException(this.getClass().getSimpleName() + " cancel this task: " + request + ", cost " + (System.currentTimeMillis() - createTime) + "ms", JRpcErrorMessage.SERVICE_TIMEOUT_ERROR);
+            notifyListeners();
+            try {
+                lock.lock();
+                condition.signalAll();
+            } finally {
+                lock.unlock();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean cancel() {
+        if (RESULT_UPDATE.compareAndSet(this, RUNNING, CANCELED)) {
+            this.processTime = System.currentTimeMillis() - createTime;
+            this.exception = new JRpcServiceProviderException(this.getClass().getSimpleName() + " cancel this task: " + request + ", cost " + (System.currentTimeMillis() - createTime) + "ms");
+            notifyListeners();
+            try {
+                lock.lock();
+                condition.signalAll();
+            } finally {
+                lock.unlock();
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override

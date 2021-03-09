@@ -10,6 +10,7 @@ import com.zjj.rpc.Provider;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.rpc.message.DefaultResponse;
+import com.zjj.rpc.support.DefaultProvider;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -26,57 +27,7 @@ public class TestProtocol {
 
         DefaultProtocol protocol = new DefaultProtocol();
         final HelloServiceImpl helloService = new HelloServiceImpl();
-        protocol.export(new Provider<HelloService>() {
-            @Override
-            public Method lookupMethod(String methodName, String methodParameterSign) {
-                try {
-                    return helloService.getClass().getMethod(methodName, ReflectUtils.fromClassName(methodParameterSign));
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            public HelloService getImpl() {
-                return helloService;
-            }
-
-            @Override
-            public Class<HelloService> getInterface() {
-                return HelloService.class;
-            }
-
-            @Override
-            public Response call(Request request) {
-                return DefaultResponse.builder().value(request.getRequestId()).protocolVersion(request.getProtocolVersion())
-                        .requestId(request.getRequestId()).serializeNumber(0).build();
-            }
-
-            @Override
-            public void init() {
-            }
-
-            @Override
-            public void destroy() {
-
-            }
-
-            @Override
-            public boolean isAvailable() {
-                return true;
-            }
-
-            @Override
-            public String desc() {
-                return "null";
-            }
-
-            @Override
-            public JRpcURL getUrl() {
-                return jRpcURL;
-            }
-        }, jRpcURL);
+        protocol.export(new DefaultProvider<>(HelloService.class, helloService, jRpcURL), jRpcURL);
     }
     @Test
     public void testDefaultProtocol() {

@@ -1,30 +1,23 @@
 package com.zjj.transport;
 
 import com.zjj.HelloService;
-import com.zjj.common.JRpcURL;
-import com.zjj.common.JRpcURLParamType;
+import com.zjj.codec.Codec;
 import com.zjj.common.utils.ReflectUtils;
 import com.zjj.common.utils.RequestIdUtils;
-import com.zjj.rpc.ResponseFuture;
+import com.zjj.extension.ExtensionLoader;
 import com.zjj.rpc.message.DefaultRequest;
-import com.zjj.transport.netty.client.NettyClient;
+import com.zjj.serialize.Serialization;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.IntStream;
 
 public class TestClient {
-    public static void main(String[] args) throws NoSuchMethodException, IOException, ExecutionException, InterruptedException {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put("address", "39.105.65.104:2181");
-        parameters.put(JRpcURLParamType.registryRetryPeriod.getName(), "1000");
-        JRpcURL jRpcURL = new JRpcURL("jrpc", "127.0.0.1", 20855, "com.zjj.registry.zookeeper", parameters);
 
-        NettyClient nettyClient = new NettyClient(jRpcURL);
-        nettyClient.open();
+    @Test
+    public void encode() throws NoSuchMethodException, IOException {
+        Codec codec = ExtensionLoader.getExtensionLoader(Codec.class).getDefaultExtension();
         Method method = HelloService.class.getMethod("hello", String.class);
         DefaultRequest request = DefaultRequest.builder()
                 .interfaceName(HelloService.class.getName())
@@ -34,20 +27,20 @@ public class TestClient {
                 .attachments(new HashMap<>())
                 .requestId(RequestIdUtils.getRequestId())
                 .build();
-        ResponseFuture responseFuture = (ResponseFuture) nettyClient.request(request);
-        IntStream.range(0, 20).forEach(i -> {
-            new Thread(() -> {
-                try {
-                    System.out.println("dasdsa");
-                    System.out.println(responseFuture.get());
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-        });
+        long start = System.currentTimeMillis();
+        byte[] encode = codec.encode(request);
+        Object decode = codec.decode(encode);
+        System.out.println(decode);
+        long stop = System.currentTimeMillis();
+        System.out.println("encode consume: " + (stop - start) + " ms");
+    }
 
-
+    @Test
+    public void seri() throws IOException {
+        Serialization serialization = ExtensionLoader.getExtensionLoader(Serialization.class).getDefaultExtension();
+        long start = System.currentTimeMillis();
+        serialization.serialize("world");
+        long stop = System.currentTimeMillis();
+        System.out.println("serialize consume: " + (stop - start) + " ms");
     }
 }

@@ -44,6 +44,7 @@ public class NettyChannel implements TransChannel {
             throw new JRpcFrameworkException("method request timeout cannot less than or equal zero.", JRpcErrorMessage.FRAMEWORK_INIT_ERROR);
         }
         ResponseFuture<?> responseFuture = new DefaultResponseFuture<>(getUrl(), requestTimeout, request);
+        log.info("{} create responseFuture for request {}", this.getClass().getSimpleName(), request);
         nettyClient.registerCallback(request.getRequestId(), responseFuture);
         ChannelFuture writeFuture = channel.writeAndFlush(request);
         boolean result = writeFuture.awaitUninterruptibly(requestTimeout);
@@ -60,7 +61,9 @@ public class NettyChannel implements TransChannel {
             return responseFuture;
         }
         writeFuture.cancel(true);
-        responseFuture.cancel();
+        if (nettyClient.containsCallback(request.getRequestId())) {
+            nettyClient.removeCallback(request.getRequestId()).cancel();
+        }
         log.error("NettyChannel request [{}] error, url: [{}]", request, getUrl());
         throw new JRpcServiceProviderException(writeFuture.cause());
     }
@@ -74,7 +77,7 @@ public class NettyChannel implements TransChannel {
         try {
             this.channel = nettyClient.connect().syncUninterruptibly().channel();
             this.localAddress = (InetSocketAddress) channel.localAddress();
-            log.warn("NettyChannel {} has started success.", channel);
+            log.info("NettyChannel {} has started success.", channel);
             state = ChannelState.ACTIVE;
         } catch (Exception e) {
             log.warn("NettyChannel {} has occurred exception.", this, e);

@@ -10,7 +10,6 @@ import com.zjj.rpc.Message;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +32,7 @@ public class NettyCodec extends ByteToMessageCodec<Message> {
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
         byte[] data;
+        log.info("message {} comes into NettyCodec encoder", msg);
         if (msg instanceof Request) {
             data = codec.encode(msg);
         } else if (msg instanceof Response) {
@@ -41,21 +41,26 @@ public class NettyCodec extends ByteToMessageCodec<Message> {
             throw new JRpcFrameworkException("encode " + msg + " error, message type " + msg.getClass() + " not supported.",
                     JRpcErrorMessage.FRAMEWORK_ENCODE_ERROR);
         }
-        log.info("NettyEncoder encode {} success by codec {}", msg, codec.getClass().getSimpleName());
         int nettyHeader = ProtocolVersion.NETTY_VERSION.getHeadLength();
-        ByteBuf byteBuf = Unpooled.buffer(nettyHeader);
-        byteBuf.writeShort(JRpcURLParamType.nettyMagicNum.getShortValue());
-        byteBuf.writeZero(10);
+        int offset = 0;
         int dataLen = data.length;
-        byteBuf.writeInt(dataLen);
         byte[] bytes = new byte[nettyHeader + dataLen];
-        byteBuf.readBytes(bytes, 0, nettyHeader);
-        System.arraycopy(data, 0, bytes, nettyHeader, dataLen);
+        short magic = JRpcURLParamType.nettyMagicNum.getShortValue();
+        bytes[offset++] = (byte) (magic >> 8);
+        bytes[offset++] = (byte) magic;
+        offset += 10;
+        bytes[offset++] = (byte) (dataLen >> 24);
+        bytes[offset++] = (byte) (dataLen >> 16);
+        bytes[offset++] = (byte) (dataLen >> 8);
+        bytes[offset++] = (byte) dataLen;
+        System.arraycopy(data, 0, bytes, offset, dataLen);
+        log.info("NettyEncoder encode {} success by codec {}", msg, codec.getClass().getSimpleName());
         out.writeBytes(bytes);
     }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> out) throws Exception {
+        log.info("byteBuf {} comes into NettyCodec decoder", byteBuf);
         if (byteBuf.readableBytes() < ProtocolVersion.NETTY_VERSION.getHeadLength()) {
             log.info("In this case, maybe the current buffer space is insufficient or there is a TCP packet sticking.byteBuf readable: {}, netty header length {}", byteBuf.readableBytes(), ProtocolVersion.NETTY_VERSION.getHeadLength());
             return;

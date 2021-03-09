@@ -22,6 +22,7 @@ import java.util.Map;
 
 @Slf4j
 public class DefaultCodec extends AbstractCodec {
+
     @Override
     public byte[] encode(Object message) throws IOException {
         if (message instanceof Request) {
@@ -93,22 +94,28 @@ public class DefaultCodec extends AbstractCodec {
     private byte[] encode(byte[] body, byte flag, long requestId) {
         int headLen = ProtocolVersion.DEFAULT_VERSION.getHeadLength();
         int bodyLen = body.length;
-        ByteBuf buffer = Unpooled.buffer(headLen + bodyLen);
+        byte[] data = new byte[headLen + bodyLen];
+        int offset = 0;
         short magic = JRpcURLParamType.magicNum.getShortValue();
-        buffer.writeShort(magic);
+        data[offset++] = (byte) (magic >> 8);
+        data[offset++] = (byte) magic;
         byte version = ProtocolVersion.DEFAULT_VERSION.getVersion();
-        buffer.writeByte(version);
-        buffer.writeByte(flag);
-        buffer.writeLong(requestId);
-        buffer.writeInt(bodyLen);
-        buffer.writeBytes(body);
-        int readableBytes = buffer.readableBytes();
-        if (readableBytes < bodyLen) {
-            throw new JRpcFrameworkException("DefaultCodec decode error, readable bytes < bodyLen", JRpcErrorMessage.FRAMEWORK_DECODE_ERROR);
-        }
-        byte[] bytes = new byte[readableBytes];
-        buffer.readBytes(bytes);
-        return bytes;
+        data[offset++] = version;
+        data[offset++] = flag;
+        data[offset++] = (byte) (requestId >> 56);
+        data[offset++] = (byte) (requestId >> 48);
+        data[offset++] = (byte) (requestId >> 40);
+        data[offset++] = (byte) (requestId >> 32);
+        data[offset++] = (byte) (requestId >> 24);
+        data[offset++] = (byte) (requestId >> 16);
+        data[offset++] = (byte) (requestId >> 8);
+        data[offset++] = (byte) requestId;
+        data[offset++] = (byte) (bodyLen >> 24);
+        data[offset++] = (byte) (bodyLen >> 16);
+        data[offset++] = (byte) (bodyLen >> 8);
+        data[offset++] = (byte) bodyLen;
+        System.arraycopy(body, 0, data, offset, bodyLen);
+        return data;
     }
 
 

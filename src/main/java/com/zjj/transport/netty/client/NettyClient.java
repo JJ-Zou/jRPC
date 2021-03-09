@@ -61,7 +61,7 @@ public class NettyClient extends AbstractClient {
                     log.info("Netty client get success responseFuture process time {}ms", responseFuture.getProcessTime());
                     responseFuture.onSuccess(response);
                 } else {
-                    log.warn("Netty client get failure responseFuture process time {}ms", responseFuture.getProcessTime());
+                    log.warn("Netty client get failure responseFuture process time {}ms, exception: {}", responseFuture.getProcessTime(), responseFuture.getException().getMessage());
                     responseFuture.onFailure(response);
                 }
                 return null;
@@ -157,6 +157,10 @@ public class NettyClient extends AbstractClient {
 
     public ResponseFuture removeCallback(long requestId) {
         return callbackMap.remove(requestId);
+    }
+
+    public boolean containsCallback(long requestId) {
+        return callbackMap.containsKey(requestId);
     }
 
 }
