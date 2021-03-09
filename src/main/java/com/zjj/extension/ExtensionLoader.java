@@ -1,5 +1,6 @@
 package com.zjj.extension;
 
+import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.ReflectUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -145,10 +146,8 @@ public class ExtensionLoader<T> {
                 if (line.isEmpty() || line.startsWith("#")) {
                     continue;
                 }
-                String[] entry = line.split("=");
-                String key = entry[0].trim();
-                String className = entry[1].trim();
-                loadClass(key, className);
+                String[] entry = JRpcURLParamType.equalSplitPattern.getPattern().split(line);
+                loadClass(entry[0], entry[1]);
             }
         } catch (Exception e) {
             log.error("We load resource {} fail while getting instance of type {}.", url, type);

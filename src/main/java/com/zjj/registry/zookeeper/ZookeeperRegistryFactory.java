@@ -22,7 +22,7 @@ public class ZookeeperRegistryFactory extends AbstractRegistryFactory {
             int sessionTimeout = registryUrl.getParameter(JRpcURLParamType.registrySessionTimeout.getName(), JRpcURLParamType.registrySessionTimeout.getIntValue());
             int retryTimes = registryUrl.getParameter(JRpcURLParamType.registryRetryTimes.getName(), JRpcURLParamType.registryRetryTimes.getIntValue());
             int sleepMsBetweenRetries = registryUrl.getParameter(JRpcURLParamType.sleepMsBetweenRetries.getName(), JRpcURLParamType.sleepMsBetweenRetries.getIntValue());
-            String address = registryUrl.getParameter("address");
+            String address = registryUrl.getAddress();
             CuratorFramework zkClient = CuratorFrameworkFactory.builder()
                     .connectString(address)
                     .retryPolicy(new RetryNTimes(retryTimes, sleepMsBetweenRetries))

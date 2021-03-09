@@ -1,15 +1,13 @@
 package com.zjj.common.utils;
 
+import com.zjj.common.JRpcURLParamType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -48,7 +46,10 @@ public class ReflectUtils {
         if (method.getParameterCount() != 0) {
             return false;
         }
-        if (method.getReturnType().isPrimitive()) {
+        if (Iterator.class.isAssignableFrom(method.getReturnType())) {
+            return false;
+        }
+        if (Map.class.isAssignableFrom(method.getReturnType())) {
             return false;
         }
         return true;
@@ -68,10 +69,19 @@ public class ReflectUtils {
         if (!Modifier.isPublic(method.getModifiers())) {
             return false;
         }
+        if (Modifier.isStatic(method.getModifiers())) {
+            return false;
+        }
         if (method.getParameterCount() != 1) {
             return false;
         }
         if (method.getReturnType() != void.class) {
+            return false;
+        }
+        if (Iterator.class.isAssignableFrom(method.getParameterTypes()[0])) {
+            return false;
+        }
+        if (Map.class.isAssignableFrom(method.getParameterTypes()[0])) {
             return false;
         }
         return true;
@@ -86,6 +96,22 @@ public class ReflectUtils {
     public static String getPropertyFromSetter(Method method) {
         String setter = method.getName();
         return setter.substring(3, 4).toLowerCase() + setter.substring(4);
+    }
+
+    /**
+     * 获取getter方法参数对应的字段名称
+     *
+     * @param method getter方法
+     * @return 字段名称
+     */
+    public static String getPropertyFromGetter(Method method) {
+        String getter = method.getName();
+        int prefix = getter.startsWith("get") ? 3 : 2;
+        return getter.substring(prefix, prefix + 1).toLowerCase() + getter.substring(prefix + 1);
+    }
+
+    public static String getMethodSign(String methodName, String paramSigns) {
+        return StringUtils.isEmpty(paramSigns) ? methodName + "()" : methodName + "(" + paramSigns + ")";
     }
 
     /**
@@ -138,7 +164,7 @@ public class ReflectUtils {
         if (classNames == null || StringUtils.isBlank(classNames) || classNames.equals("void")) {
             return Collections.emptyList();
         }
-        return Arrays.stream(classNames.split(","))
+        return Arrays.stream(JRpcURLParamType.commaSplitPattern.getPattern().split(classNames))
                 .map(ReflectUtils::fromClassName).collect(Collectors.toList());
     }
 

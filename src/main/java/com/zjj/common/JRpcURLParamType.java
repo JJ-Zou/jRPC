@@ -1,5 +1,7 @@
 package com.zjj.common;
 
+import java.util.regex.Pattern;
+
 public enum JRpcURLParamType {
     version("version", "1.0"),
     group("group", "default_rpc"),
@@ -30,6 +32,12 @@ public enum JRpcURLParamType {
     nettyMagicNum("nettyMagicNum", (short) 0xdcba),
     requestTimeout("requestTimeout", 200),
     throwException("throwException", true),
+    commaSplitPattern("registrySplitPattern", Pattern.compile("\\s*[,]\\s*")),
+    equalSplitPattern("equalSplitPattern", Pattern.compile("\\s*[=]\\s*")),
+    colon("colon", ":"),
+    colonSplitPattern("colonSplitPattern", Pattern.compile("\\s*[:]\\s*")),
+    protocol("protocol", "jrpc"),
+    localhost("localhost", "127.0.0.1"),
     ;
     private final String name;
     private String value;
@@ -37,6 +45,7 @@ public enum JRpcURLParamType {
     private short shortValue;
     private int intValue;
     private boolean booleanValue;
+    private Pattern pattern;
 
     JRpcURLParamType(String name, String value) {
         this.name = name;
@@ -63,6 +72,11 @@ public enum JRpcURLParamType {
         this.booleanValue = booleanValue;
     }
 
+    JRpcURLParamType(String name, Pattern pattern) {
+        this.name = name;
+        this.pattern = pattern;
+    }
+
     public String getName() {
         return name;
     }
@@ -85,5 +99,9 @@ public enum JRpcURLParamType {
 
     public boolean isBooleanValue() {
         return booleanValue;
+    }
+
+    public Pattern getPattern() {
+        return pattern;
     }
 }

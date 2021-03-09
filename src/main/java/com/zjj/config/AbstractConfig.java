@@ -6,10 +6,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-@Setter
-@Getter
 @Slf4j
 public abstract class AbstractConfig implements Serializable {
 
@@ -17,6 +16,13 @@ public abstract class AbstractConfig implements Serializable {
 
     protected String id;
 
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     private static final String[] SUFFIXES = new String[]{"Config", "Bean"};
 
@@ -31,35 +37,29 @@ public abstract class AbstractConfig implements Serializable {
         return tag.toLowerCase();
     }
 
-    private static String calculateAttributeFromGetter(String getter) {
-        int i = getter.startsWith("get") ? 3 : 2;
-        return getter.substring(i, i + 1).toLowerCase() + getter.substring(i + 1);
-    }
-
     @Override
     public String toString() {
-        try {
-            StringBuilder builder = new StringBuilder();
-            builder.append("<jrpc:")
-                    .append(getTagName(getClass()));
-            for (Method method : getClass().getMethods()) {
-                if (!ReflectUtils.isGetter(method)) {
-                    continue;
-                }
-                try {
-                    String filed = calculateAttributeFromGetter(method.getName());
-                    Object value = method.invoke(this);
-                    if (value != null) {
-                        builder.append(" ").append(filed).append("=\"").append(value).append("\"");
-                    }
-                } catch (Exception e) {
-                    log.warn(e.getMessage(), e);
-                }
+        StringBuilder builder = new StringBuilder();
+        builder.append("<jrpc:")
+                .append(getTagName(getClass()));
+        for (Method method : getClass().getMethods()) {
+            if (!ReflectUtils.isGetter(method)) {
+                continue;
             }
-            builder.append(" />");
+            try {
+                String filed = ReflectUtils.getPropertyFromGetter(method);
+                Object value = method.invoke(this);
+                if (value != null) {
+                    builder.append(" ").append(filed).append("=\"").append(value).append("\"");
+                }
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                log.warn(e.getMessage(), e);
+            }
+        }
+        builder.append(" />");
+        try {
             return builder.toString();
-        } catch (Throwable e) {
-            log.warn(e.getMessage(), e);
+        } catch (Exception e) {
             return super.toString();
         }
     }

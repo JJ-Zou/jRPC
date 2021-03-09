@@ -1,0 +1,1 @@
+registryFactory=com.zjj.registry.zookeeper.ZookeeperRegistryFactory
