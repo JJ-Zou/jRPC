@@ -1,10 +1,8 @@
 package com.zjj.codec;
 
-import java.io.IOException;
-
 public interface Codec {
 
-    byte[] encode(Object message) throws IOException;
+    byte[] encode(Object message);
 
-    Object decode(byte[] bytes) throws IOException;
+    Object decode(byte[] bytes);
 }

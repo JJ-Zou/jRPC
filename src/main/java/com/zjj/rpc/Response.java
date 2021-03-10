@@ -2,12 +2,10 @@ package com.zjj.rpc;
 
 import java.util.Map;
 
-public interface Response extends Message{
+public interface Response extends Message {
     Object getValue();
 
     Exception getException();
-
-    long getRequestId();
 
     long getProcessTime();
 

@@ -38,6 +38,7 @@ public enum JRpcURLParamType {
     colonSplitPattern("colonSplitPattern", Pattern.compile("\\s*[:]\\s*")),
     protocol("protocol", "jrpc"),
     localhost("localhost", "127.0.0.1"),
+    directConnectUrl("directConnectUrl", ""),
     ;
     private final String name;
     private String value;

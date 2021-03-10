@@ -14,4 +14,6 @@ public class ProtocolConfig extends AbstractConfig {
     private String loadBalance;
     private String haStrategy;
     private String proxy;
+
+    private boolean isDefault;
 }

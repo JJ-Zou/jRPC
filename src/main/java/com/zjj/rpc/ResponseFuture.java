@@ -1,6 +1,8 @@
 package com.zjj.rpc;
 
 
+import com.zjj.protocol.ProtocolVersion;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -30,7 +32,7 @@ public abstract class ResponseFuture<V> implements JFuture<V>, Response {
 
     @Override
     public byte getProtocolVersion() {
-        throw new IllegalStateException();
+        return ProtocolVersion.DEFAULT_VERSION.getVersion();
     }
 
     @Override
@@ -40,7 +42,7 @@ public abstract class ResponseFuture<V> implements JFuture<V>, Response {
 
     @Override
     public int getSerializeNumber() {
-        throw new IllegalStateException();
+        return 0;
     }
 
     @Override

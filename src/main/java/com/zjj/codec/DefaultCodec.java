@@ -1,8 +1,8 @@
 package com.zjj.codec;
 
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.common.utils.EncoderUtils;
 import com.zjj.common.utils.ReflectUtils;
-import com.zjj.exception.AbstractJRpcException;
 import com.zjj.exception.JRpcErrorMessage;
 import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.protocol.ProtocolVersion;
@@ -24,12 +24,16 @@ import java.util.Map;
 public class DefaultCodec extends AbstractCodec {
 
     @Override
-    public byte[] encode(Object message) throws IOException {
-        if (message instanceof Request) {
-            return encodeRequest((Request) message);
-        }
-        if (message instanceof Response) {
-            return encodeResponse((Response) message);
+    public byte[] encode(Object message) {
+        try {
+            if (message instanceof Request) {
+                return encodeRequest((Request) message);
+            }
+            if (message instanceof Response) {
+                return encodeResponse((Response) message);
+            }
+        } catch (IOException e) {
+            log.warn("encode {} error.", message);
         }
         throw new JRpcFrameworkException("encode " + message + " error, message type " + message.getClass() + " not supported.",
                 JRpcErrorMessage.FRAMEWORK_ENCODE_ERROR);
@@ -61,7 +65,7 @@ public class DefaultCodec extends AbstractCodec {
             objectOutput.flush();
             byte[] body = outputStream.toByteArray();
             byte flag = JRpcURLParamType.requestFlag.getByteValue();
-            return encode(body, flag, request.getRequestId());
+            return EncoderUtils.wrapperHeader(body, JRpcURLParamType.magicNum.getShortValue(), flag, request.getRequestId());
         }
     }
 
@@ -87,40 +91,12 @@ public class DefaultCodec extends AbstractCodec {
             }
             objectOutput.flush();
             byte[] body = outputStream.toByteArray();
-            return encode(body, flag, response.getRequestId());
+            return EncoderUtils.wrapperHeader(body, JRpcURLParamType.magicNum.getShortValue(), flag, response.getRequestId());
         }
     }
 
-    private byte[] encode(byte[] body, byte flag, long requestId) {
-        int headLen = ProtocolVersion.DEFAULT_VERSION.getHeadLength();
-        int bodyLen = body.length;
-        byte[] data = new byte[headLen + bodyLen];
-        int offset = 0;
-        short magic = JRpcURLParamType.magicNum.getShortValue();
-        data[offset++] = (byte) (magic >> 8);
-        data[offset++] = (byte) magic;
-        byte version = ProtocolVersion.DEFAULT_VERSION.getVersion();
-        data[offset++] = version;
-        data[offset++] = flag;
-        data[offset++] = (byte) (requestId >> 56);
-        data[offset++] = (byte) (requestId >> 48);
-        data[offset++] = (byte) (requestId >> 40);
-        data[offset++] = (byte) (requestId >> 32);
-        data[offset++] = (byte) (requestId >> 24);
-        data[offset++] = (byte) (requestId >> 16);
-        data[offset++] = (byte) (requestId >> 8);
-        data[offset++] = (byte) requestId;
-        data[offset++] = (byte) (bodyLen >> 24);
-        data[offset++] = (byte) (bodyLen >> 16);
-        data[offset++] = (byte) (bodyLen >> 8);
-        data[offset++] = (byte) bodyLen;
-        System.arraycopy(body, 0, data, offset, bodyLen);
-        return data;
-    }
-
-
     @Override
-    public Object decode(byte[] bytes) throws IOException {
+    public Object decode(byte[] bytes) {
         int headLen = ProtocolVersion.DEFAULT_VERSION.getHeadLength();
         if (bytes.length <= headLen) {
             throw new JRpcFrameworkException("DefaultCodec decode error, lack length.", JRpcErrorMessage.FRAMEWORK_DECODE_ERROR);
@@ -150,13 +126,9 @@ public class DefaultCodec extends AbstractCodec {
                 return decodeResponse(body, requestId, flag);
             }
         } catch (Exception e) {
-            if (AbstractJRpcException.class.isAssignableFrom(e.getClass())) {
-                throw new JRpcFrameworkException("DefaultCodec decode error, " + (isRequest ? "request" : "response") + " body error.", e, JRpcErrorMessage.FRAMEWORK_DECODE_ERROR);
-            } else {
-                log.error("DefaultCodec decode error.", e);
-                throw e;
-            }
+            log.error("DefaultCodec decode error.", e);
         }
+        throw new JRpcFrameworkException("DefaultCodec decode error, " + (isRequest ? "request" : "response") + " body error.", JRpcErrorMessage.FRAMEWORK_DECODE_ERROR);
     }
 
     private Object decodeRequest(byte[] body, long requestId) throws IOException {

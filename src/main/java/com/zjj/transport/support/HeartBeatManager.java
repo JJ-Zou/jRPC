@@ -28,7 +28,7 @@ public class HeartBeatManager implements EndpointManager {
                         .filter(entry -> !entry.getKey().isAvailable())
                         .forEach(entry -> {
                             try {
-                                entry.getKey().request(entry.getValue().createRequest());
+                                entry.getKey().heartbeat(entry.getValue().createRequest());
                             } catch (Exception e) {
                                 log.error("HeartBeatManager send heartbeat to {} error.", entry.getKey().getUrl().getUri(), e);
                             }

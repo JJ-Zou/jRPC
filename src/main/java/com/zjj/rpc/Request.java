@@ -21,7 +21,7 @@ public interface Request extends Message{
 
     String getAttachment(String key);
 
-    long getRequestId();
+
 
     int getRetries();
 

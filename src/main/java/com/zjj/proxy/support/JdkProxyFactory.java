@@ -9,6 +9,6 @@ import java.util.List;
 public class JdkProxyFactory implements ProxyFactory {
     @Override
     public <T> T getProxy(Class<T> clazz, List<Clutter<T>> clutters) {
-        return (T) Proxy.newProxyInstance(clazz.getClassLoader(), clazz.getInterfaces(), new InvokerHandler<>(clutters, clazz));
+        return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz}, new InvokerHandler<>(clutters, clazz));
     }
 }

@@ -49,7 +49,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
                     throw new IllegalStateException("Unexpected value: " + state);
             }
         });
-        this.treeCache = TreeCache.newBuilder(client, "/jrpc").build();
+        this.treeCache = TreeCache.newBuilder(client, ZkUtils.toNodeTypePath(url, ZkNodeType.AVAILABLE_SERVICE)).build();
         try {
             this.treeCache.start();
         } catch (Exception e) {
@@ -59,6 +59,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
 
     @Override
     protected void doRegister(JRpcURL url) {
+        removeNode(url, ZkNodeType.UNAVAILABLE_SERVICE);
         removeNode(url, ZkNodeType.AVAILABLE_SERVICE);
         createNode(url, ZkNodeType.UNAVAILABLE_SERVICE);
     }

@@ -3,7 +3,6 @@ package com.zjj.extension;
 import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.ReflectUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -20,7 +19,7 @@ public class ExtensionLoader<T> {
     private static final String PREFIX = "META-INF/jrpc/";
 
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<>();
-
+    // 这里面放的都是单例对象，当按照extension_key未找到对象时，构造该类型的单例对象放入这个map中
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_CLASS_INSTANCES = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, Object> extensionNameInstances = new ConcurrentHashMap<>();
@@ -30,11 +29,12 @@ public class ExtensionLoader<T> {
     private final Class<T> type;
     private final ClassLoader classLoader;
 
-    private String cachedDefaultKey;
+    private final String cachedDefaultKey;
 
     private ExtensionLoader(Class<T> type) {
         this.type = type;
         this.classLoader = Thread.currentThread().getContextClassLoader();
+        this.cachedDefaultKey = ReflectUtils.getBeanName(type);
     }
 
     public static <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
@@ -53,10 +53,6 @@ public class ExtensionLoader<T> {
     }
 
     public T getDefaultExtension() {
-        loadExtensionClasses();
-        if (cachedDefaultKey == null) {
-            return null;
-        }
         return getExtension(cachedDefaultKey);
     }
 
@@ -77,11 +73,13 @@ public class ExtensionLoader<T> {
             throw new IllegalStateException("Cannot find instance of " + name);
         }
         T instance = (T) EXTENSION_CLASS_INSTANCES.computeIfAbsent(clazz, o -> constructAndInjectExtension(clazz));
+        log.debug("We create instance {} of type {} with class name {}.", instance, type, clazz);
         return instance;
     }
 
     private T constructAndInjectExtension(Class<?> clazz) {
         try {
+            log.info("Construct and inject extension instance of class [{}] via SPI", clazz.getSimpleName());
             T instance = (T) clazz.newInstance();
             injectExtension(instance);
             return instance;
@@ -99,6 +97,7 @@ public class ExtensionLoader<T> {
                         Object extension = getExtensionLoader(parameterType).getDefaultExtension();
                         if (extension != null) {
                             method.invoke(instance, extension);
+                            log.debug("instance {} inject extension {} success", instance, extension);
                         }
                     } catch (Exception e) {
                         log.error("Cannot use method {} inject filed into instance {}.", method, instance, e);
@@ -107,18 +106,7 @@ public class ExtensionLoader<T> {
     }
 
     private void loadExtensionClasses() {
-        cacheDefaultKey();
         loadDirectory(type.getName());
-    }
-
-    private void cacheDefaultKey() {
-        SPI annotation = type.getAnnotation(SPI.class);
-        if (annotation == null || StringUtils.isBlank(annotation.value())) {
-            String simpleName = type.getSimpleName();
-            this.cachedDefaultKey = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
-            return;
-        }
-        this.cachedDefaultKey = annotation.value();
     }
 
     private void loadDirectory(String name) {
@@ -163,6 +151,7 @@ public class ExtensionLoader<T> {
                 clazz = Class.forName(className);
             }
             extensionClasses.putIfAbsent(key, clazz);
+            log.debug("We load class {} success while getting instance of type {}.", key, className);
         } catch (Exception e) {
             log.error("We load class {} fail while getting instance of type {}.", key, className);
         }

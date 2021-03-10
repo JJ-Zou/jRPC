@@ -16,5 +16,5 @@ public interface ConfigHandler {
 
     <T> void unExport(Collection<Exporter<T>> exporters, Collection<JRpcURL> registryUrls);
 
-    <T> T refer(Class<T> interfaceClass, List<Clutter<T>> clutters, String proxyType);
+    <T> T refer(Class<T> interfaceClass, List<Clutter<T>> clutters);
 }

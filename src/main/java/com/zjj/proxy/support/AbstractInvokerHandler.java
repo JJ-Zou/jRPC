@@ -55,12 +55,15 @@ public abstract class AbstractInvokerHandler<T> implements InvocationHandler {
         for (Clutter<T> clutter : clutters) {
             builder.append("{protocol:")
                     .append(clutter.getUrl().getProtocol());
-            for (Reference<T> reference : clutter.getReferences()) {
-                builder.append("[")
-                        .append(reference.getUrl().toSimpleString())
-                        .append(", available:")
-                        .append(reference.isAvailable())
-                        .append("] ");
+            List<Reference<T>> references = clutter.getReferences();
+            if (references != null) {
+                for (Reference<T> reference : references) {
+                    builder.append("[")
+                            .append(reference.getUrl().toSimpleString())
+                            .append(", available:")
+                            .append(reference.isAvailable())
+                            .append("] ");
+                }
             }
             builder.append(" }");
         }

@@ -110,12 +110,6 @@ public class DefaultResponseFuture<V> extends ResponseFuture<V> {
     public void addListener(FutureListener<? extends JFuture<? super V>> listener) {
         if (!isRunning()) {
             notifyListener(listener);
-            try {
-                lock.lock();
-                condition.signalAll();
-            } finally {
-                lock.unlock();
-            }
             return;
         }
         listeners.add(listener);
@@ -153,15 +147,15 @@ public class DefaultResponseFuture<V> extends ResponseFuture<V> {
     }
 
     private boolean timeoutCancel() {
+        this.processTime = System.currentTimeMillis() - createTime;
         if (RESULT_UPDATE.compareAndSet(this, RUNNING, CANCELED)) {
-            this.processTime = System.currentTimeMillis() - createTime;
             this.exception = new JRpcServiceProviderException(this.getClass().getSimpleName() + " cancel this task: " + request + ", cost " + (System.currentTimeMillis() - createTime) + "ms", JRpcErrorMessage.SERVICE_TIMEOUT_ERROR);
-            notifyListeners();
             try {
                 lock.lock();
                 condition.signalAll();
             } finally {
                 lock.unlock();
+                notifyListeners();
             }
             return true;
         }
@@ -173,12 +167,12 @@ public class DefaultResponseFuture<V> extends ResponseFuture<V> {
         if (RESULT_UPDATE.compareAndSet(this, RUNNING, CANCELED)) {
             this.processTime = System.currentTimeMillis() - createTime;
             this.exception = new JRpcServiceProviderException(this.getClass().getSimpleName() + " cancel this task: " + request + ", cost " + (System.currentTimeMillis() - createTime) + "ms");
-            notifyListeners();
             try {
                 lock.lock();
                 condition.signalAll();
             } finally {
                 lock.unlock();
+                notifyListeners();
             }
             return true;
         }

@@ -4,6 +4,7 @@ import com.zjj.clutter.LoadBalance;
 import com.zjj.rpc.Reference;
 import com.zjj.rpc.Request;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public abstract class AbstractLoadBalance<T> implements LoadBalance<T> {
     @Override
     public void onRefresh(List<Reference<T>> references) {
         Collections.shuffle(references);
-        this.references = references;
+        this.references = new ArrayList<>(references);
     }
 
     @Override

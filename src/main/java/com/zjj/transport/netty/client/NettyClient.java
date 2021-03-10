@@ -7,6 +7,7 @@ import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.rpc.ResponseFuture;
+import com.zjj.rpc.message.DefaultResponse;
 import com.zjj.transport.TransChannel;
 import com.zjj.transport.netty.ChannelState;
 import com.zjj.transport.netty.NettyChannelHandler;
@@ -124,7 +125,7 @@ public class NettyClient extends AbstractClient {
         }
         Response response = channel.request(request);
         //todo:
-        return response;
+        return new DefaultResponse(response);
     }
 
 

@@ -52,4 +52,7 @@ public class NetUtils {
         }
     }
 
+    public static String getLoopbackIp() {
+        return InetAddress.getLoopbackAddress().getHostAddress();
+    }
 }

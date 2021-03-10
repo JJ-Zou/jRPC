@@ -15,6 +15,8 @@ import com.zjj.rpc.message.DefaultResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -38,7 +40,6 @@ public class DefaultClutter<T> implements Clutter<T> {
         available.set(true);
     }
 
-
     @Override
     public void onRefresh(List<Reference<T>> references) {
         if (CollectionUtils.isEmpty(references)) {
@@ -47,7 +48,7 @@ public class DefaultClutter<T> implements Clutter<T> {
         }
         loadBalance.onRefresh(references);
         List<Reference<T>> old = this.references;
-        this.references = references;
+        this.references = new ArrayList<>(references);
         haStrategy.setUrl(url);
         if (CollectionUtils.isEmpty(old)) {
             return;

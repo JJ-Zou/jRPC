@@ -22,6 +22,10 @@ public class JRpcURL {
 
     private volatile transient Map<String, Number> cachedNumber;
 
+    public JRpcURL(String protocol, String host, String path) {
+        this(protocol, host, 0, path, Collections.emptyMap());
+    }
+
     public JRpcURL(String protocol, String host, int port, String path) {
         this(protocol, host, port, path, Collections.emptyMap());
     }
@@ -93,6 +97,12 @@ public class JRpcURL {
             return new JRpcURL(getProtocol(), getHost(), getPort(), getPath());
         }
         return new JRpcURL(getProtocol(), getHost(), getPort(), getPath(), new HashMap<>(getParameters()));
+    }
+
+    public JRpcURL deepCloneWithParameter(Map<String, String> params) {
+        JRpcURL url = deepClone();
+        params.forEach(url::addParameter);
+        return url;
     }
 
     public JRpcURL deepCloneWithAddress(String host, int port) {

@@ -6,10 +6,12 @@ import com.zjj.exception.JRpcErrorMessage;
 import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.exception.JRpcServiceConsumerException;
 import com.zjj.exception.JRpcServiceProviderException;
+import com.zjj.extension.ExtensionLoader;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.rpc.ResponseFuture;
 import com.zjj.rpc.support.DefaultResponseFuture;
+import com.zjj.transport.HeartBeatFactory;
 import com.zjj.transport.TransChannel;
 import com.zjj.transport.netty.ChannelState;
 import io.netty.channel.Channel;
@@ -31,9 +33,12 @@ public class NettyChannel implements TransChannel {
     private InetSocketAddress localAddress;
     private final InetSocketAddress remoteAddress;
 
+    private HeartBeatFactory heartBeatFactory;
+
     public NettyChannel(NettyClient nettyClient) {
         this.nettyClient = nettyClient;
         this.remoteAddress = nettyClient.getRemoteAddress();
+        this.heartBeatFactory = ExtensionLoader.getExtensionLoader(HeartBeatFactory.class).getDefaultExtension();
     }
 
     @Override
@@ -46,7 +51,11 @@ public class NettyChannel implements TransChannel {
         ResponseFuture<?> responseFuture = new DefaultResponseFuture<>(getUrl(), requestTimeout, request);
         log.info("{} create responseFuture for request {}", this.getClass().getSimpleName(), request);
         nettyClient.registerCallback(request.getRequestId(), responseFuture);
-        ChannelFuture writeFuture = channel.writeAndFlush(request);
+        ChannelFuture writeFuture = channel.writeAndFlush(request).addListener(f -> {
+            if (f.isSuccess()) {
+                log.info("{} send request {} success.", this.getClass().getSimpleName(), request);
+            }
+        });
         boolean result = writeFuture.awaitUninterruptibly(requestTimeout);
         if (result) {
             responseFuture.addListener(f -> {
@@ -79,6 +88,12 @@ public class NettyChannel implements TransChannel {
             this.localAddress = (InetSocketAddress) channel.localAddress();
             log.info("NettyChannel {} has started success.", channel);
             state = ChannelState.ACTIVE;
+            Request heartbeat = heartBeatFactory.createRequest();
+            channel.writeAndFlush(heartbeat).await().addListener(f -> {
+                if (f.isSuccess()) {
+                    log.info("heartbeat {} send success.", heartbeat);
+                }
+            });
         } catch (Exception e) {
             log.warn("NettyChannel {} has occurred exception.", this, e);
             state = ChannelState.INACTIVE;

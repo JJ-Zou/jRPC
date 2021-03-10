@@ -1,13 +1,12 @@
 package com.zjj.transport;
 
 import com.zjj.HelloService;
-import com.zjj.codec.Codec;
 import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.ReflectUtils;
 import com.zjj.common.utils.RequestIdUtils;
 import com.zjj.extension.ExtensionLoader;
-import com.zjj.rpc.ResponseFuture;
+import com.zjj.rpc.Response;
 import com.zjj.rpc.message.DefaultRequest;
 import com.zjj.transport.netty.client.NettyClient;
 import com.zjj.transport.netty.server.NettyEndpointFactory;
@@ -18,6 +17,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 public class TestNetty {
@@ -31,28 +31,67 @@ public class TestNetty {
         NettyClient nettyClient = new NettyClient(jRpcURL);
         nettyClient.open();
         Method method = HelloService.class.getMethod("hello", String.class);
+        long start = 0;
+        Response responseFuture = null;
+        try {
+            DefaultRequest request = DefaultRequest.builder()
+                    .interfaceName(HelloService.class.getName())
+                    .methodName(method.getName())
+                    .parameterSign(ReflectUtils.getParamSigns(method))
+                    .arguments(new Object[]{"world " + "single0"})
+                    .attachments(new HashMap<>())
+                    .requestId(RequestIdUtils.getRequestId())
+                    .build();
+            start = System.currentTimeMillis();
+            responseFuture = nettyClient.request(request);
+            System.out.println(responseFuture.getRequestId() + " call: " + responseFuture.getValue());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(responseFuture.getRequestId() + " consume: " + (System.currentTimeMillis() - start) + "ms");
+
         IntStream.range(0, 10).forEach(i -> {
             new Thread(() -> {
-                long start = 0;
-                ResponseFuture responseFuture = null;
+                long start1 = 0;
+                Response responseFuture1 = null;
                 try {
                     DefaultRequest request = DefaultRequest.builder()
                             .interfaceName(HelloService.class.getName())
                             .methodName(method.getName())
                             .parameterSign(ReflectUtils.getParamSigns(method))
-                            .arguments(new Object[]{"world"})
+                            .arguments(new Object[]{"world " + i})
                             .attachments(new HashMap<>())
                             .requestId(RequestIdUtils.getRequestId())
                             .build();
-                    start = System.currentTimeMillis();
-                    responseFuture = (ResponseFuture) nettyClient.request(request);
-                    System.out.println(responseFuture.getRequestId() + " call: " + responseFuture.get());
-                } catch (IOException | InterruptedException | ExecutionException e) {
+                    start1 = System.currentTimeMillis();
+                    responseFuture1 = nettyClient.request(request);
+                    System.out.println(responseFuture1.getRequestId() + " call: " + responseFuture1.getValue());
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println(responseFuture.getRequestId() + " consume: " + (System.currentTimeMillis() - start) + "ms");
+                System.out.println(responseFuture1.getRequestId() + " consume: " + (System.currentTimeMillis() - start1) + "ms");
             }).start();
         });
+        TimeUnit.SECONDS.sleep(1);
+        start = 0;
+        responseFuture = null;
+        try {
+            DefaultRequest request = DefaultRequest.builder()
+                    .interfaceName(HelloService.class.getName())
+                    .methodName(method.getName())
+                    .parameterSign(ReflectUtils.getParamSigns(method))
+                    .arguments(new Object[]{"world " + "single1"})
+                    .attachments(new HashMap<>())
+                    .requestId(RequestIdUtils.getRequestId())
+                    .build();
+            start = System.currentTimeMillis();
+            responseFuture = nettyClient.request(request);
+            System.out.println(responseFuture.getRequestId() + " call: " + responseFuture.getValue());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(responseFuture.getRequestId() + " consume: " + (System.currentTimeMillis() - start) + "ms");
+
     }
 
     @Test

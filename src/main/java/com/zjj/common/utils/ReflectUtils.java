@@ -142,6 +142,11 @@ public class ReflectUtils {
         return builder.substring(0, length - 1);
     }
 
+    public static String getBeanName(Class<?> type) {
+        String simpleName = type.getSimpleName();
+        return Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
+    }
+
     /**
      * 获取类型的全限定类名，数组在类名后加[]
      *

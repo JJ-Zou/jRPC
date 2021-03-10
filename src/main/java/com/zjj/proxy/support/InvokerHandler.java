@@ -5,10 +5,11 @@ import com.zjj.common.utils.ReflectUtils;
 import com.zjj.common.utils.RequestIdUtils;
 import com.zjj.rpc.message.DefaultRequest;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.List;
 
-public class InvokerHandler<T> extends AbstractInvokerHandler<T> {
+public class InvokerHandler<T> extends AbstractInvokerHandler<T> implements InvocationHandler {
 
     public InvokerHandler(List<Clutter<T>> clutters, Class<T> clazz) {
         super(clutters, clazz, clazz.getName());
@@ -21,7 +22,7 @@ public class InvokerHandler<T> extends AbstractInvokerHandler<T> {
                 .interfaceName(this.interfaceName)
                 .methodName(method.getName())
                 .arguments(args)
-                .parameterSign(ReflectUtils.getMethodSign(method))
+                .parameterSign(ReflectUtils.getParamSigns(method))
                 .build();
         return invoke(request, method.getReturnType());
     }
