@@ -13,6 +13,11 @@ import java.util.Enumeration;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * computeIfAbsent 递归调用时会出现死循环
+ *
+ * @param <T>
+ */
 @Slf4j
 public class ExtensionLoader<T> {
 
@@ -60,7 +65,16 @@ public class ExtensionLoader<T> {
         if (name == null) {
             return null;
         }
-        Object instance = extensionNameInstances.computeIfAbsent(name, o -> createExtension(name));
+        Object instance = extensionNameInstances.get(name);
+        if (instance == null) {
+            synchronized (extensionNameInstances) {
+                instance = extensionNameInstances.get(name);
+                if (instance == null) {
+                    instance = createExtension(name);
+                    extensionNameInstances.put(name, instance);
+                }
+            }
+        }
         return (T) instance;
     }
 
@@ -72,9 +86,13 @@ public class ExtensionLoader<T> {
         if (clazz == null) {
             throw new IllegalStateException("Cannot find instance of " + name);
         }
-        T instance = (T) EXTENSION_CLASS_INSTANCES.computeIfAbsent(clazz, o -> constructAndInjectExtension(clazz));
+        Object instance = EXTENSION_CLASS_INSTANCES.get(clazz);
+        if (instance == null) {
+            instance = constructAndInjectExtension(clazz);
+            EXTENSION_CLASS_INSTANCES.put(clazz, instance);
+        }
         log.debug("We create instance {} of type {} with class name {}.", instance, type, clazz);
-        return instance;
+        return (T) instance;
     }
 
     private T constructAndInjectExtension(Class<?> clazz) {
