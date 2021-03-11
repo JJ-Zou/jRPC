@@ -8,4 +8,5 @@ import lombok.Setter;
 public abstract class BaseReferenceConfig extends AbstractReferenceConfig {
     private static final long serialVersionUID = 4059589984503217585L;
     private Boolean isDefault;
+
 }

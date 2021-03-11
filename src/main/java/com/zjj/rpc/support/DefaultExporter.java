@@ -2,7 +2,7 @@ package com.zjj.rpc.support;
 
 import com.zjj.common.JRpcURL;
 import com.zjj.extension.ExtensionLoader;
-import com.zjj.protocol.support.AbstractProtocol;
+import com.zjj.protocol.Protocol;
 import com.zjj.rpc.Provider;
 import com.zjj.transport.EndpointFactory;
 import com.zjj.transport.Server;
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 public class DefaultExporter<T> extends AbstractExporter<T> {
-
+    private static final Protocol PROTOCOL = ExtensionLoader.getExtensionLoader(Protocol.class).getDefaultExtension();
     private static final ConcurrentMap<String, ProviderRouter> PROVIDER_ROUTERS = new ConcurrentHashMap<>();
 
     protected final EndpointFactory endpointFactory;
@@ -35,7 +35,7 @@ public class DefaultExporter<T> extends AbstractExporter<T> {
     public void unExport() {
         String protocolKey = url.getProtocolKey();
         String address = url.getAddress();
-        AbstractProtocol.destroy(protocolKey);
+        PROTOCOL.destroy(protocolKey);
         if (PROVIDER_ROUTERS.containsKey(address)) {
             PROVIDER_ROUTERS.get(address).removeProvider(provider);
         }

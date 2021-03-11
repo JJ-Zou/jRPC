@@ -16,9 +16,15 @@ public class ReflectUtils {
     private ReflectUtils() {
     }
 
+    private static final Set<Class<?>> PRIMITIVE_WRAPPER_CLASS;
     private static final Map<String, Class<?>> NAME_CLASS_MAP = new ConcurrentHashMap<>();
 
     static {
+        PRIMITIVE_WRAPPER_CLASS = new HashSet<>(Arrays.asList(
+                Boolean.class, Byte.class, Character.class, Short.class,
+                Integer.class, Long.class, Float.class, Double.class,
+                String.class
+        ));
         NAME_CLASS_MAP.put("boolean", boolean.class);
         NAME_CLASS_MAP.put("byte", byte.class);
         NAME_CLASS_MAP.put("char", char.class);
@@ -46,10 +52,7 @@ public class ReflectUtils {
         if (method.getParameterCount() != 0) {
             return false;
         }
-        if (Iterator.class.isAssignableFrom(method.getReturnType())) {
-            return false;
-        }
-        if (Map.class.isAssignableFrom(method.getReturnType())) {
+        if (!isPrimitiveOrWrapper(method.getReturnType())) {
             return false;
         }
         return true;
@@ -201,5 +204,66 @@ public class ReflectUtils {
             clazz = Class.forName(className, true, Thread.currentThread().getContextClassLoader());
         }
         return Array.newInstance(clazz, dimensions).getClass();
+    }
+
+    public static ClassLoader getClassLoader() {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+        return classLoader;
+    }
+
+    public static boolean isPrimitiveOrWrapper(Class<?> type) {
+        return type.isPrimitive() || PRIMITIVE_WRAPPER_CLASS.contains(type);
+    }
+
+    public static boolean isConfigGetter(Method method) {
+        String name = method.getName();
+        if (!name.startsWith("get") && !name.startsWith("is")) {
+            return false;
+        }
+        if (name.equals("get") || name.equals("is")) {
+            return false;
+        }
+        if (name.equals("getClass") || name.equals("getObject") || name.equals("isDefault") || name.equals("getIsDefault")) {
+            return false;
+        }
+        if (!Modifier.isPublic(method.getModifiers())) {
+            return false;
+        }
+        if (method.getParameterCount() != 0) {
+            return false;
+        }
+        if (!isPrimitiveOrWrapper(method.getReturnType())) {
+            return false;
+        }
+        if (Map.class.isAssignableFrom(method.getReturnType())) {
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean isMapGetter(Method method) {
+        String name = method.getName();
+        if (!name.startsWith("get")) {
+            return false;
+        }
+        if (name.equals("get")) {
+            return false;
+        }
+        if (name.equals("getClass") || name.equals("getObject")) {
+            return false;
+        }
+        if (!Modifier.isPublic(method.getModifiers())) {
+            return false;
+        }
+        if (method.getParameterCount() != 0) {
+            return false;
+        }
+        if (!Map.class.isAssignableFrom(method.getReturnType())) {
+            return false;
+        }
+        return true;
     }
 }

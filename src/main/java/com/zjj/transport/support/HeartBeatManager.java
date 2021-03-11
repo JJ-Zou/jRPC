@@ -13,7 +13,7 @@ import java.util.concurrent.*;
 
 @Slf4j
 public class HeartBeatManager implements EndpointManager {
-    private static final ConcurrentMap<Client, HeartBeatFactory> HEART_BEAT_FACTORIES = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Client, HeartBeatFactory> HEART_BEAT_FACTORIES = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService executor;
 

@@ -3,12 +3,15 @@ package com.zjj.config;
 import com.zjj.clutter.Clutter;
 import com.zjj.clutter.clutter.ClutterNotify;
 import com.zjj.common.JRpcURL;
+import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.NetUtils;
 import com.zjj.extension.ExtensionLoader;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ReferenceConfig<T> extends BaseReferenceConfig {
@@ -26,7 +29,7 @@ public class ReferenceConfig<T> extends BaseReferenceConfig {
 
     private String serverInterface;
 
-    protected List<MethodConfig> methods;
+    protected List<MethodConfig> methodConfigs;
 
     private final List<ClutterNotify<T>> clutterNotifies = new ArrayList<>();
 
@@ -41,12 +44,20 @@ public class ReferenceConfig<T> extends BaseReferenceConfig {
         if (initialized) {
             return;
         }
+        checkInterface(interfaceClass);
+        checkProtocolConfigs();
         checkRegistry();
-        checkInterfaceAndMethods(interfaceClass, methods);
+        checkInterfaceAndMethods(interfaceClass, methodConfigs);
         String localIp = NetUtils.getLocalHostString();
         List<Clutter<T>> clutters = protocolConfigs.stream().map(protocolConfig -> {
+            Map<String, String> params = new HashMap<>();
+            params.put(JRpcURLParamType.nodeType.getName(), JRpcURLParamType.referer.getValue());
+            params.put(JRpcURLParamType.version.getName(), JRpcURLParamType.version.getValue());
+            params.put(JRpcURLParamType.refreshTimestamp.getName(), String.valueOf(System.currentTimeMillis()));
+            refreshConfigs(params, protocolConfig, this);
+            refreshMethodConfigs(params, methodConfigs);
             String path = StringUtils.isBlank(serverInterface) ? interfaceClass.getName() : serverInterface;
-            JRpcURL refUrl = new JRpcURL(protocolConfig.getName(), localIp, path);
+            JRpcURL refUrl = new JRpcURL(protocolConfig.getName(), localIp, path, params);
             ClutterNotify<T> clutterNotify = createClutterNotify(refUrl);
             clutterNotifies.add(clutterNotify);
             return clutterNotify.getClutter();
@@ -59,14 +70,38 @@ public class ReferenceConfig<T> extends BaseReferenceConfig {
         if (StringUtils.isNotBlank(directConnectStr)) {
 
         }
-        return new ClutterNotify<>(interfaceClass, registryUrls, refUrl);
+        return CONFIG_HANDLER.getClutterNotify(interfaceClass, registryUrls, refUrl);
     }
 
     public void setInterfaceClass(Class<T> interfaceClass) {
         this.interfaceClass = interfaceClass;
     }
 
-    public void setMethods(List<MethodConfig> methods) {
-        this.methods = methods;
+    public void setMethodConfigs(List<MethodConfig> methodConfigs) {
+        this.methodConfigs = methodConfigs;
+    }
+
+    public List<MethodConfig> getMethodConfigs() {
+        return methodConfigs;
+    }
+
+    public List<ClutterNotify<T>> getClutterNotifies() {
+        return clutterNotifies;
+    }
+
+    public Class<T> getInterfaceClass() {
+        return interfaceClass;
+    }
+
+    public String getDirectConnectStr() {
+        return directConnectStr;
+    }
+
+    public static ConfigHandler getConfigHandler() {
+        return CONFIG_HANDLER;
+    }
+
+    public String getServerInterface() {
+        return serverInterface;
     }
 }

@@ -12,13 +12,13 @@ import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 public abstract class AbstractProtocol implements Protocol {
-    protected static final ConcurrentMap<String, Exporter<?>> EXPORTERS = new ConcurrentHashMap<>();
+    protected final ConcurrentMap<String, Exporter<?>> exporters = new ConcurrentHashMap<>();
 
 
     @Override
     public <T> Exporter<T> export(Provider<T> provider, JRpcURL url) {
         String protocolKey = url.getProtocolKey();
-        Exporter<T> exporter = (Exporter<T>) EXPORTERS.computeIfAbsent(protocolKey, e -> doExport(provider, url));
+        Exporter<T> exporter = (Exporter<T>) exporters.computeIfAbsent(protocolKey, e -> doExport(provider, url));
         exporter.init();
         log.info("{} export service: {} success.", this.getClass().getSimpleName(), url);
         return exporter;
@@ -37,16 +37,16 @@ public abstract class AbstractProtocol implements Protocol {
 
     protected abstract <T> Reference<T> doRefer(Class<T> clazz, JRpcURL url, JRpcURL serviceUrl);
 
-    public static void destroy(String protocolKey) {
-        if (!EXPORTERS.containsKey(protocolKey)) {
+    public void destroy(String protocolKey) {
+        if (!exporters.containsKey(protocolKey)) {
             return;
         }
-        EXPORTERS.remove(protocolKey).destroy();
+        exporters.remove(protocolKey).destroy();
     }
 
     @Override
     public void destroy() {
-        EXPORTERS.forEach((k, v) -> v.destroy());
-        EXPORTERS.clear();
+        exporters.forEach((k, v) -> v.destroy());
+        exporters.clear();
     }
 }

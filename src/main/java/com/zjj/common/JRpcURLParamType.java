@@ -8,8 +8,9 @@ public enum JRpcURLParamType {
     application("application", "jrpc"),
     module("module", "jrpc"),
     nodeType("nodeType", "service"),
+    referer("referer", "referer"),
     registryRetryPeriod("registryRetryPeriod", 30 * 1000),
-    connectTimeout("connectTimeout", 1000),
+    connectTimeout("connectTimeout", 5000),
     registrySessionTimeout("registrySessionTimeout", 60000),
     registryRetryTimes("registryRetryTimes", 1),
     sleepMsBetweenRetries("sleepMsBetweenRetries", 1000),
@@ -39,6 +40,10 @@ public enum JRpcURLParamType {
     protocol("protocol", "jrpc"),
     localhost("localhost", "127.0.0.1"),
     directConnectUrl("directConnectUrl", ""),
+    refreshTimestamp("refreshTimestamp", 0),
+    period("period ", "."),
+    method_config_prefix("method_config_prefix ", "methodConfig."),
+    defaultClass("defaultClass", void.class),
     ;
     private final String name;
     private String value;
@@ -47,6 +52,7 @@ public enum JRpcURLParamType {
     private int intValue;
     private boolean booleanValue;
     private Pattern pattern;
+    private Class<?> type;
 
     JRpcURLParamType(String name, String value) {
         this.name = name;
@@ -78,6 +84,11 @@ public enum JRpcURLParamType {
         this.pattern = pattern;
     }
 
+    JRpcURLParamType(String name, Class<?> type) {
+        this.name = name;
+        this.type = type;
+    }
+
     public String getName() {
         return name;
     }
@@ -104,5 +115,9 @@ public enum JRpcURLParamType {
 
     public Pattern getPattern() {
         return pattern;
+    }
+
+    public Class<?> getType() {
+        return type;
     }
 }

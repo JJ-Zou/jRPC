@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,9 +61,15 @@ public class ServiceConfig<T> extends BaseServiceConfig {
         if (StringUtils.isEmpty(exportAddr)) {
             exportAddr = NetUtils.getLocalHostString();
         }
-        JRpcURL refUrl = new JRpcURL(protocolName, exportAddr, exportPort, interfaceClass.getName());
+        Map<String, String> params = new HashMap<>();
+        params.put(JRpcURLParamType.nodeType.getName(), JRpcURLParamType.nodeType.getValue());
+        params.put(JRpcURLParamType.refreshTimestamp.getName(), String.valueOf(System.currentTimeMillis()));
+        refreshConfigs(params, protocolConfig, this);
+        refreshMethodConfigs(params, methodConfigs);
+        JRpcURL refUrl = new JRpcURL(protocolName, exportAddr, exportPort, interfaceClass.getName(), params);
         if (existService(refUrl)) {
             log.warn("{} already exist.", refUrl);
+            return;
         }
         Exporter<T> exporter = CONFIG_HANDLER.export(interfaceClass, ref, registryUrls, refUrl);
         exporters.add(exporter);

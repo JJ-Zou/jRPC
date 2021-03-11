@@ -1,13 +1,15 @@
 package com.zjj.config;
 
+import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.ReflectUtils;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public abstract class AbstractConfig implements Serializable {
@@ -35,6 +37,49 @@ public abstract class AbstractConfig implements Serializable {
             }
         }
         return tag.toLowerCase();
+    }
+
+    protected void refreshConfigs(Map<String, String> params, AbstractConfig... abstractConfigs) {
+        Arrays.stream(abstractConfigs).forEach(abstractConfig -> abstractConfig.appendConfigParams(params, null));
+    }
+
+    protected void appendConfigParams(Map<String, String> params, String prefix) {
+        Method[] methods = getClass().getMethods();
+        Arrays.stream(methods)
+                .forEach(method -> {
+                    if (ReflectUtils.isConfigGetter(method)) {
+                        String filedProperty = ReflectUtils.getPropertyFromGetter(method);
+                        filedProperty = (prefix == null) ? filedProperty : (prefix + JRpcURLParamType.period.getValue() + filedProperty);
+                        Object value = null;
+                        try {
+                            value = method.invoke(this);
+                            if (value != null) {
+                                params.put(filedProperty, String.valueOf(value));
+                            }
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            log.error("filed property {} cannot obtain.", filedProperty);
+                        }
+                    } else if (method.getName().equals("getParameters") && ReflectUtils.isMapGetter(method)) {
+                        Map<String, String> map;
+                        try {
+                            map = (Map<String, String>) method.invoke(this);
+                            params.putAll(map);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            log.error("Map<String, String> parameters property cannot obtain.");
+                        }
+                    }
+                });
+
+    }
+
+    protected void refreshMethodConfigs(Map<String, String> param, List<MethodConfig> methodConfigs) {
+        methodConfigs.forEach(methodConfig ->
+                methodConfig.appendConfigParams(param,
+                        JRpcURLParamType.method_config_prefix.getValue()
+                                + methodConfig.getName()
+                                + "("
+                                + methodConfig.getArgumentTypes()
+                                + ")"));
     }
 
     @Override

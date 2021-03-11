@@ -3,10 +3,12 @@ package com.zjj.config;
 import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.ReflectUtils;
+import com.zjj.exception.JRpcErrorMessage;
 import com.zjj.exception.JRpcFrameworkException;
 import com.zjj.registry.RegistryService;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.Method;
@@ -17,6 +19,7 @@ import java.util.Set;
 
 @Setter
 @Getter
+@Slf4j
 public abstract class AbstractInterfaceConfig extends AbstractConfig {
     private static final long serialVersionUID = -7564123152873135129L;
 
@@ -35,6 +38,22 @@ public abstract class AbstractInterfaceConfig extends AbstractConfig {
         if (registryUrls.isEmpty()) {
             throw new IllegalStateException("Need at least one registry!");
         }
+    }
+
+    protected void checkProtocolConfigs() {
+        if (CollectionUtils.isEmpty(protocolConfigs)) {
+            throw new JRpcFrameworkException("check protocolConfigs not initialized.", JRpcErrorMessage.FRAMEWORK_INIT_ERROR);
+        }
+    }
+
+    protected void checkInterface(Class<?> interfaceClass) {
+        try {
+            Class.forName(interfaceClass.getName(), true, ReflectUtils.getClassLoader());
+            return;
+        } catch (ClassNotFoundException e) {
+            log.error("{} ClassNotFoundException", interfaceClass);
+        }
+        throw new JRpcFrameworkException("check interface " + interfaceClass + " illegal.", JRpcErrorMessage.FRAMEWORK_INIT_ERROR);
     }
 
     /**

@@ -31,7 +31,7 @@ public class TestReference {
         ReferenceConfig<HelloService> referenceConfig = new ReferenceConfig<>();
         referenceConfig.setRegistryConfigs(Collections.singletonList(registryConfig));
         referenceConfig.setInterfaceClass(HelloService.class);
-        referenceConfig.setMethods(Collections.singletonList(methodConfig));
+        referenceConfig.setMethodConfigs(Collections.singletonList(methodConfig));
         referenceConfig.setProtocolConfigs(Collections.singletonList(protocolConfig));
         Object ref = referenceConfig.getRef();
 

@@ -10,5 +10,7 @@ public interface Protocol {
 
     <T> Reference<T> refer(Class<T> clazz, JRpcURL url, JRpcURL serviceUrl);
 
+    void destroy(String protocolKey);
+
     void destroy();
 }

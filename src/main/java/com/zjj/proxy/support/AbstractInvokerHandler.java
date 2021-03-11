@@ -2,6 +2,7 @@ package com.zjj.proxy.support;
 
 import com.zjj.clutter.Clutter;
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.exception.JRpcServiceConsumerException;
 import com.zjj.rpc.Reference;
 import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
@@ -83,12 +84,14 @@ public abstract class AbstractInvokerHandler<T> implements InvocationHandler {
             request.setAttachment(JRpcURLParamType.application.getName(), clutter.getUrl().getApplication());
             request.setAttachment(JRpcURLParamType.module.getName(), clutter.getUrl().getModule());
 
-            Response response;
+            Response response = null;
             try {
                 response = clutter.call(request);
                 return response.getValue();
+            } catch (JRpcServiceConsumerException e) {
+                throw e;
             } catch (Exception e) {
-
+                throw e;
             }
         }
         throw new IllegalStateException();

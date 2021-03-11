@@ -30,6 +30,10 @@ public class JRpcURL {
         this(protocol, host, port, path, Collections.emptyMap());
     }
 
+    public JRpcURL(String protocol, String host, String path, Map<String, String> parameters) {
+        this(protocol, host, 0, path, parameters);
+    }
+
     public JRpcURL(String protocol, String host, int port, String path, Map<String, String> parameters) {
         this.protocol = protocol;
         this.host = host;

@@ -10,19 +10,19 @@ import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 public abstract class AbstractRegistryFactory implements RegistryFactory {
-    private static final ConcurrentMap<String, Registry> REGISTRIES = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Registry> registries = new ConcurrentHashMap<>();
 
     @Override
     public Registry getRegistry(JRpcURL url) {
         String registryUri = url.getUri();
-        Registry registry = REGISTRIES.get(registryUri);
+        Registry registry = registries.get(registryUri);
         if (registry == null) {
             synchronized (AbstractRegistryFactory.class) {
-                registry = REGISTRIES.get(registryUri);
+                registry = registries.get(registryUri);
                 if (registry == null) {
                     log.info("create Registry for URL ({}) and put it into cache.", url);
                     registry = createRegistry(url);
-                    REGISTRIES.putIfAbsent(registryUri, registry);
+                    registries.putIfAbsent(registryUri, registry);
                 }
             }
         }
