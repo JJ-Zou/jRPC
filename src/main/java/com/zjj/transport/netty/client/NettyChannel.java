@@ -74,7 +74,7 @@ public class NettyChannel implements TransChannel {
             nettyClient.removeCallback(request.getRequestId()).cancel();
         }
         log.error("NettyChannel request [{}] error, url: [{}]", request, getUrl());
-        throw new JRpcServiceProviderException(writeFuture.cause());
+        throw new JRpcServiceProviderException(responseFuture.getException());
     }
 
     @Override

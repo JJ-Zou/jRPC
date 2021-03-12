@@ -19,6 +19,7 @@ import java.util.List;
 public class DefaultConfigHandler implements ConfigHandler {
 
     private static final ProxyFactory PROXY_FACTORY = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getDefaultExtension();
+    private static final Protocol PROTOCOL = ExtensionLoader.getExtensionLoader(Protocol.class).getDefaultExtension();
 
     @Override
     public <T> ClutterNotify<T> getClutterNotify(Class<T> interfaceClass, Collection<JRpcURL> registryUrls, JRpcURL refUrl) {
@@ -27,9 +28,8 @@ public class DefaultConfigHandler implements ConfigHandler {
 
     @Override
     public <T> Exporter<T> export(Class<T> interfaceClass, T ref, Collection<JRpcURL> registryUrls, JRpcURL refUrl) {
-        Protocol protocol = ExtensionLoader.getExtensionLoader(Protocol.class).getDefaultExtension();
         Provider<T> provider = new DefaultProvider<>(interfaceClass, ref, refUrl);
-        Exporter<T> exporter = protocol.export(provider, refUrl);
+        Exporter<T> exporter = PROTOCOL.export(provider, refUrl);
         RegistryFactory registryFactory = ExtensionLoader.getExtensionLoader(RegistryFactory.class).getDefaultExtension();
         registryUrls.forEach(url -> {
             Registry registry = registryFactory.getRegistry(url);

@@ -1,8 +1,10 @@
 package com.zjj.config.spring.beans;
 
-import com.zjj.config.spring.ServiceBean;
+import com.zjj.config.AbstractConfig;
+import com.zjj.config.support.ConfigBeanManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
 import org.springframework.lang.NonNull;
@@ -12,42 +14,43 @@ public class JRpcInstantiationAwareBeanPostProcessor implements InstantiationAwa
 
     @Override
     public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
-        if (beanClass == ServiceBean.class) {
-            log.error("[postProcessBeforeInstantiation] beanClass: {}, beanName: {}", beanClass, beanName);
+        if (AbstractConfig.class.isAssignableFrom(beanClass)) {
+            log.info("[postProcessBeforeInstantiation] beanClass: {}, beanName: {}", beanClass, beanName);
         }
         return null;
     }
 
     @Override
     public boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
-        if (bean.getClass() == ServiceBean.class) {
-            log.error("[postProcessAfterInstantiation] bean: {}, beanName: {}", bean, beanName);
+        if (AbstractConfig.class.isAssignableFrom(bean.getClass())) {
+            log.info("[postProcessAfterInstantiation] bean: {}, beanName: {}", bean, beanName);
         }
         return true;
     }
 
     @Override
     public PropertyValues postProcessProperties(@NonNull PropertyValues pvs, Object bean, @NonNull String beanName) throws BeansException {
-        if (bean.getClass() == ServiceBean.class) {
-            log.error("[postProcessProperties] pvs: {}, bean: {}, beanName: {}", pvs, bean, beanName);
+        if (AbstractConfig.class.isAssignableFrom(bean.getClass())) {
+            ((MutablePropertyValues) pvs).add("id", beanName);
+            log.info("[bean: {}, beanName: {}] propertyValues: {}", bean, beanName, pvs.getPropertyValues());
         }
-        return pvs;
+        return null;
     }
 
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-        if (bean.getClass() == ServiceBean.class) {
-            log.error("[postProcessBeforeInitialization] bean: {}, beanName: {}", bean, beanName);
+        if (AbstractConfig.class.isAssignableFrom(bean.getClass())) {
         }
-        return null;
+        return bean;
     }
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if (bean.getClass() == ServiceBean.class) {
-            System.out.println(((ServiceBean<?>) bean).getInterfaceClass());
-            log.error("[postProcessAfterInitialization] bean: {}, beanName: {}", bean, beanName);
+        if (AbstractConfig.class.isAssignableFrom(bean.getClass())) {
+            ConfigBeanManager.addAbstractConfig(beanName, (AbstractConfig) bean);
+            log.info("put ({}, {}) into ConfigBeanManager success", beanName, bean);
         }
-        return null;
+        return bean;
     }
+
 }

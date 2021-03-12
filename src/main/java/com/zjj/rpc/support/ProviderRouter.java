@@ -10,7 +10,6 @@ import com.zjj.rpc.Request;
 import com.zjj.rpc.Response;
 import com.zjj.rpc.message.DefaultRequest;
 import com.zjj.rpc.message.DefaultResponse;
-import com.zjj.serialize.Serialization;
 import com.zjj.transport.MessageHandler;
 import com.zjj.transport.TransChannel;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +28,12 @@ import java.util.stream.Stream;
 public class ProviderRouter implements MessageHandler {
 
     protected static final ConcurrentMap<String, Provider<?>> providers = new ConcurrentHashMap<>();
-    private static final Serialization serialization = ExtensionLoader.getExtensionLoader(Serialization.class).getDefaultExtension();
 
     protected final AtomicInteger methodNum = new AtomicInteger(0);
 
     private final ProviderProtectedStrategy strategy;
 
-    public ProviderRouter(Provider<?> provider) {
-        addProvider(provider);
+    public ProviderRouter() {
         strategy = ExtensionLoader.getExtensionLoader(ProviderProtectedStrategy.class).getDefaultExtension();
     }
 

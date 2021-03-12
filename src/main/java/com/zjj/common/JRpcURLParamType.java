@@ -44,6 +44,8 @@ public enum JRpcURLParamType {
     period("period ", "."),
     method_config_prefix("method_config_prefix ", "methodConfig."),
     defaultClass("defaultClass", void.class),
+    exportProtocol("exportProtocol", "jrpc:32121"),
+    exportPort("exportPort", 32121),
     ;
     private final String name;
     private String value;

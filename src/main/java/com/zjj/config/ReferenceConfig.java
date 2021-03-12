@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ReferenceConfig<T> extends BaseReferenceConfig {
+public class ReferenceConfig<T> extends AbstractReferenceConfig {
     private static final long serialVersionUID = -8529195602996641811L;
 
     private static final ConfigHandler CONFIG_HANDLER = ExtensionLoader.getExtensionLoader(ConfigHandler.class).getDefaultExtension();

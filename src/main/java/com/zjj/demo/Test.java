@@ -1,22 +1,18 @@
-package com.zjj.config;
+package com.zjj.demo;
 
-import com.zjj.demo.HelloService;
-import com.zjj.demo.HelloService2;
+import com.zjj.config.MethodConfig;
+import com.zjj.config.ProtocolConfig;
+import com.zjj.config.ReferenceConfig;
+import com.zjj.config.RegistryConfig;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
 
-public class TestReference {
+public class Test {
     private HelloService2 helloService2;
 
     public void setHelloService2(HelloService2 helloService2) {
         this.helloService2 = helloService2;
-    }
-
-    private HelloService helloService;
-
-    public void setHelloService(HelloService helloService) {
-        this.helloService = helloService;
     }
 
     public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException {
@@ -41,9 +37,7 @@ public class TestReference {
         referenceConfig.setProtocolConfigs(Collections.singletonList(protocolConfig));
         Object ref = referenceConfig.getRef();
 
-        TestReference testReference = new TestReference();
-
-
+        Test testReference = new Test();
         Field field = testReference.getClass().getDeclaredField("helloService2");
         field.setAccessible(true);
         field.set(testReference, ref);
@@ -51,20 +45,5 @@ public class TestReference {
         System.out.println(testReference.helloService2.compute("world"));
         long stop = System.currentTimeMillis();
         System.out.println((stop - start) + "ms");
-
-        ReferenceConfig<HelloService> referenceConfig1 = new ReferenceConfig<>();
-
-        referenceConfig1.setRegistryConfigs(Collections.singletonList(registryConfig));
-        referenceConfig1.setInterfaceClass(HelloService.class);
-        referenceConfig1.setMethodConfigs(Collections.singletonList(methodConfig));
-        referenceConfig1.setProtocolConfigs(Collections.singletonList(protocolConfig));
-        Object ref1 = referenceConfig1.getRef();
-        Field field1 = testReference.getClass().getDeclaredField("helloService");
-        field1.setAccessible(true);
-        field1.set(testReference, ref1);
-        long start1 = System.currentTimeMillis();
-        System.out.println(testReference.helloService.compute("world1"));
-        long stop1 = System.currentTimeMillis();
-        System.out.println((stop1 - start1) + "ms");
     }
 }

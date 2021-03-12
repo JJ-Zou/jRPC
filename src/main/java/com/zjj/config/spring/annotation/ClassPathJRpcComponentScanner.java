@@ -6,8 +6,11 @@ import com.zjj.config.spring.ServiceBean;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.RuntimeBeanNameReference;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.context.annotation.AnnotationBeanNameGenerator;
@@ -43,6 +46,12 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
     }
 
     @Override
+    public int scan(String... basePackages) {
+        Set<BeanDefinitionHolder> beanDefinitionHolders = doScan(basePackages);
+        return beanDefinitionHolders.size();
+    }
+
+    @Override
     @NonNull
     public Set<BeanDefinitionHolder> doScan(@NonNull String... basePackages) {
         Assert.notEmpty(basePackages, "At least one base package must be specified");
@@ -50,12 +59,19 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
         Arrays.stream(basePackages).forEach(basePackage -> {
             Set<BeanDefinition> beanDefinitions = findCandidateComponents(basePackage);
             beanDefinitions.stream()
-                    .filter(b -> checkCandidate(BEAN_NAME_GENERATOR.generateBeanName(b, registry), b))
+                    .filter(b -> (b instanceof AnnotatedBeanDefinition)
+                            && ((AnnotatedBeanDefinition) b).getMetadata().hasAnnotation(JRpcService.class.getName())
+                            && checkCandidate(BEAN_NAME_GENERATOR.generateBeanName(b, registry), b))
                     .forEach(beanDefinition -> {
                                 String beanName = beanDefinition.getBeanClassName();
                                 Assert.notNull(beanName, "beanName cannot be null.");
                                 Class<?> beanClass = ClassUtils.resolveClassName(beanName, ReflectUtils.getClassLoader());
-                                buildBeanDefinitionForServiceBean(beanDefinitionHolders, beanClass);
+                                // not only registry ServiceBean's BeanDefinition
+                                BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(beanDefinition, beanName);
+                                beanDefinitionHolders.add(definitionHolder);
+                                registry.registerBeanDefinition(beanName, beanDefinition);
+                                // but don't scan
+                                buildBeanDefinitionForServiceBean(beanClass, beanName);
                             }
                     );
         });
@@ -65,13 +81,13 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
     /**
      * build beanDefinition for ref use type ServiceBean
      *
-     * @param beanDefinitionHolders beanDefinitionHolders
-     * @param beanClass             ref class type
+     * @param beanClass ref class type
+     * @param annotationBeanName @JRpcService bean name
      * @see com.zjj.config.spring.beans.JRpcInstantiationAwareBeanPostProcessor#postProcessProperties(PropertyValues, Object, String)
      */
-    private void buildBeanDefinitionForServiceBean(Set<BeanDefinitionHolder> beanDefinitionHolders, Class<?> beanClass) {
+    private void buildBeanDefinitionForServiceBean(Class<?> beanClass, String annotationBeanName) {
         JRpcService service = beanClass.getDeclaredAnnotation(JRpcService.class);
-        AnnotationAttributes annotationAttributes = AnnotationUtils.getAnnotationAttributes(null, service);
+        AnnotationAttributes annotationAttributes = AnnotationUtils.getAnnotationAttributes(service, false, false);
         Class<?> interfaceClass = obtainInterfaceClass(beanClass, annotationAttributes);
         // change bean name
         String beanName = rebuildBeanName(annotationAttributes, interfaceClass);
@@ -83,8 +99,16 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
             sbd.setBeanClass(ServiceBean.class);
             sbd.setResource(resource);
             sbd.setSource(resource);
-            BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(sbd, beanName);
-            beanDefinitionHolders.add(definitionHolder);
+            MutablePropertyValues propertyValues = sbd.getPropertyValues();
+            propertyValues.add("interfaceClass", interfaceClass)
+                    .add("ref", new RuntimeBeanReference(annotationBeanName))//com.zjj.demo.impl.HelloServiceImpl2
+                    .add("beanName", beanName)
+                    .add("application", JRpcURLParamType.application.getValue())
+                    .add("module", JRpcURLParamType.module.getValue())
+                    .add("version", annotationAttributes.getString(JRpcURLParamType.version.getName()))
+                    .add("group", annotationAttributes.getString(JRpcURLParamType.group.getName()))
+            ;
+// TODO: 2021/3/11 ServiceBean配置
             registry.registerBeanDefinition(beanName, sbd);
         } catch (IOException e) {
             throw new BeanDefinitionStoreException(

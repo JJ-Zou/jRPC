@@ -55,7 +55,6 @@ public class NettyChannelHandler extends ChannelDuplexHandler {
         }
         try {
             executor.execute(() -> processMessage(channel, message));
-            log.info("Run task in thread pool {}.", executor);
         } catch (RejectedExecutionException e) {
             if (message instanceof Request) {
                 Request request = (Request) message;
@@ -76,13 +75,14 @@ public class NettyChannelHandler extends ChannelDuplexHandler {
                     ((NettyServer) transChannel).incrementReject();
                 }
             } else {
-                processResponse(message);
                 log.warn("{} is full, run task in netty thread {}.", executor, Thread.currentThread());
+                processResponse(message);
             }
         }
     }
 
     private void processMessage(Channel channel, Message message) {
+        log.info("Run task in thread pool {}.", executor);
         if (message instanceof Request) {
             processRequest(channel, (Request) message);
         } else {

@@ -16,6 +16,15 @@ public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {
 
     protected String exportProtocol;
     protected String exportHost;
+    protected boolean isDefault;
+
+    public abstract void export();
+
+    public abstract void unExport();
+
+    public abstract boolean isExported();
+
+    public abstract boolean isUnexported();
 
 
     /**

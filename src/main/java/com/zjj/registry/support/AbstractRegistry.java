@@ -37,7 +37,7 @@ public abstract class AbstractRegistry implements Registry {
         if (url == null) {
             throw new IllegalArgumentException("url == null.");
         }
-        log.info("[{}]: URL [{}] will register to registry {}", registryClassName, url, registryUrl.getIdentity());
+        log.info("[{}] url: [{}] will register to registry {}", registryClassName, url, registryUrl.getIdentity());
         doRegister(url);
         registeredServiceUrls.add(url);
         available(url);
@@ -48,7 +48,7 @@ public abstract class AbstractRegistry implements Registry {
         if (url == null) {
             throw new IllegalArgumentException("url == null.");
         }
-        log.info("[{}]: URL [{}] will unregister from registry {}", registryClassName, url, registryUrl.getIdentity());
+        log.info("[{}] url: [{}] will unregister from registry {}", registryClassName, url, registryUrl.getIdentity());
         doUnregister(url);
         registeredServiceUrls.remove(url);
     }
@@ -56,13 +56,13 @@ public abstract class AbstractRegistry implements Registry {
 
     @Override
     public void available(JRpcURL url) {
-        log.info("[{}]: URL [{}] will set available to registry {}", url, registryClassName, registryUrl.getIdentity());
+        log.info("[{}] url: [{}] will set available to registry {}", registryClassName, url, registryUrl.getIdentity());
         doAvailable(url);
     }
 
     @Override
     public void unavailable(JRpcURL url) {
-        log.info("[{}]: URL [{}] will set unavailable to registry {}", url, registryClassName, registryUrl.getIdentity());
+        log.info("[{}] url: [{}] will set unavailable to registry {}", registryClassName,url,  registryUrl.getIdentity());
         doUnavailable(url);
     }
 
@@ -77,7 +77,7 @@ public abstract class AbstractRegistry implements Registry {
             log.warn("Illegal argument, url = {}, listener = {}", url, listener);
             return;
         }
-        log.info("[{}]: listener [{}] will subscribe to registry {} with URL: {}", registryClassName, listener, registryUrl.getIdentity(), url);
+        log.info("[{}] listener: [{}] will subscribe to registry {} with url: {}", registryClassName, listener, registryUrl.getIdentity(), url);
         doSubscribe(url, listener);
     }
 
@@ -87,7 +87,7 @@ public abstract class AbstractRegistry implements Registry {
             log.warn("Illegal argument, url = {}, listener = {}", url, listener);
             return;
         }
-        log.info("[{}]: listener [{}] will unsubscribe from registry {} with URL: {}", registryClassName, listener, registryUrl.getIdentity(), url);
+        log.info("[{}] listener: [{}] will unsubscribe from registry {} with url: {}", registryClassName, listener, registryUrl.getIdentity(), url);
         doUnsubscribe(url, listener);
     }
 

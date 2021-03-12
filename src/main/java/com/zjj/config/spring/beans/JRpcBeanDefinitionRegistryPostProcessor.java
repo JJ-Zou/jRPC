@@ -23,7 +23,6 @@ import java.util.*;
 @Slf4j
 public class JRpcBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegistryPostProcessor {
 
-
     /**
      *
      * @param registry BeanDefinitionRegistry

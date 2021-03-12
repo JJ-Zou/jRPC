@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Setter
 @Getter
-public class ServiceConfig<T> extends BaseServiceConfig {
+public class ServiceConfig<T> extends AbstractServiceConfig {
     private static final long serialVersionUID = 7509808393399061064L;
     private static final ConfigHandler CONFIG_HANDLER = ExtensionLoader.getExtensionLoader(ConfigHandler.class).getDefaultExtension();
 
@@ -29,9 +29,9 @@ public class ServiceConfig<T> extends BaseServiceConfig {
 
     protected transient List<MethodConfig> methodConfigs;
 
-    private T ref;
+    private transient T ref;
 
-    private Class<T> interfaceClass;
+    private transient Class<T> interfaceClass;
 
     private transient volatile boolean exported;
     private transient volatile boolean unexported;

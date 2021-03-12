@@ -16,14 +16,13 @@ public class DefaultExporter<T> extends AbstractExporter<T> {
     private static final Protocol PROTOCOL = ExtensionLoader.getExtensionLoader(Protocol.class).getDefaultExtension();
     private static final ConcurrentMap<String, ProviderRouter> PROVIDER_ROUTERS = new ConcurrentHashMap<>();
 
-    protected final EndpointFactory endpointFactory;
+    protected static final EndpointFactory ENDPOINT_FACTORY = ExtensionLoader.getExtensionLoader(EndpointFactory.class).getDefaultExtension();
     protected final Server server;
 
     public DefaultExporter(JRpcURL url, Provider<T> provider) {
         super(url, provider);
         ProviderRouter providerRouter = obtainProviderRouter(url);
-        endpointFactory = ExtensionLoader.getExtensionLoader(EndpointFactory.class).getDefaultExtension();
-        server = endpointFactory.createServer(url, providerRouter);
+        server = ENDPOINT_FACTORY.createServer(url, providerRouter);
     }
 
     @Override
@@ -42,10 +41,9 @@ public class DefaultExporter<T> extends AbstractExporter<T> {
         log.info("DefaultExporter unExport url {}", url);
     }
 
-
     @Override
     public void destroy() {
-        endpointFactory.releaseResource(server, url);
+        ENDPOINT_FACTORY.releaseResource(server, url);
     }
 
     @Override
@@ -54,7 +52,9 @@ public class DefaultExporter<T> extends AbstractExporter<T> {
     }
 
     protected ProviderRouter obtainProviderRouter(JRpcURL url) {
-        String address = url.getAddress();
-        return PROVIDER_ROUTERS.computeIfAbsent(address, p -> new ProviderRouter(provider));
+        String key = url.getAddress();
+        ProviderRouter providerRouter = PROVIDER_ROUTERS.computeIfAbsent(key, p -> new ProviderRouter());
+        providerRouter.addProvider(provider);
+        return providerRouter;
     }
 }

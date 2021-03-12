@@ -58,12 +58,12 @@ public class NettyClient extends AbstractClient {
                     log.warn("Netty client has response from server but get null, request id = {}", response.getRequestId());
                     return null;
                 }
-                if (responseFuture.getException() == null) {
-                    log.info("Netty client get success responseFuture process time {}ms", responseFuture.getProcessTime());
+                if (response.getException() == null) {
                     responseFuture.onSuccess(response);
+                    log.info("Netty client get success responseFuture process time {}ms", responseFuture.getProcessTime());
                 } else {
-                    log.warn("Netty client get failure responseFuture process time {}ms, exception: {}", responseFuture.getProcessTime(), responseFuture.getException().getMessage());
                     responseFuture.onFailure(response);
+                    log.warn("Netty client get failure responseFuture process time {}ms, exception: {}", responseFuture.getProcessTime(), response.getException().getMessage());
                 }
                 return null;
             });

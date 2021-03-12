@@ -2,12 +2,16 @@ package com.zjj.config;
 
 import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.ReflectUtils;
+import com.zjj.exception.JRpcErrorMessage;
+import com.zjj.exception.JRpcFrameworkException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -28,8 +32,19 @@ public abstract class AbstractConfig implements Serializable {
 
     private static final String[] SUFFIXES = new String[]{"Config", "Bean"};
 
-    private static String getTagName(Class<?> cls) {
-        String tag = cls.getSimpleName();
+    public String getTagName() {
+        String tag = this.getClass().getSimpleName();
+        for (String suffix : SUFFIXES) {
+            if (tag.endsWith(suffix)) {
+                tag = tag.substring(0, tag.length() - suffix.length());
+                break;
+            }
+        }
+        return tag.toLowerCase();
+    }
+
+    public static String getTagName(Class<?> clazz) {
+        String tag = clazz.getSimpleName();
         for (String suffix : SUFFIXES) {
             if (tag.endsWith(suffix)) {
                 tag = tag.substring(0, tag.length() - suffix.length());
@@ -73,6 +88,9 @@ public abstract class AbstractConfig implements Serializable {
     }
 
     protected void refreshMethodConfigs(Map<String, String> param, List<MethodConfig> methodConfigs) {
+        if (CollectionUtils.isEmpty(methodConfigs)) {
+            return;
+        }
         methodConfigs.forEach(methodConfig ->
                 methodConfig.appendConfigParams(param,
                         JRpcURLParamType.method_config_prefix.getValue()
@@ -86,7 +104,7 @@ public abstract class AbstractConfig implements Serializable {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("<jrpc:")
-                .append(getTagName(getClass()));
+                .append(getTagName());
         for (Method method : getClass().getMethods()) {
             if (!ReflectUtils.isGetter(method)) {
                 continue;

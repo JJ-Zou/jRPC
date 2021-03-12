@@ -5,8 +5,13 @@ import com.zjj.extension.ExtensionLoader;
 import com.zjj.transport.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 @Slf4j
 public abstract class AbstractEndpointFactory implements EndpointFactory {
+
+    protected final ConcurrentMap<String, Server> serverMap = new ConcurrentHashMap<>();
 
     private final EndpointManager endPointManager;
 
@@ -16,11 +21,16 @@ public abstract class AbstractEndpointFactory implements EndpointFactory {
 
     @Override
     public Server createServer(JRpcURL url, MessageHandler handler) {
+        String addressKey = url.getAddress();
+        return serverMap.computeIfAbsent(addressKey, s -> getServer(url, handler));
+    }
+
+    private Server getServer(JRpcURL url, MessageHandler handler) {
         MessageHandler wrapHandler = ExtensionLoader
                 .getExtensionLoader(HeartBeatFactory.class)
                 .getDefaultExtension().wrap(handler);
         Server server = doCreateServer(url, wrapHandler);
-        log.info("{} create server {} with url {}", this.getClass().getSimpleName(), server, url);
+        log.info("{} create server {} with url {}", this.getClass().getSimpleName(), server, url.getAddress());
         return server;
     }
 

@@ -15,18 +15,11 @@ public abstract class AbstractRegistryFactory implements RegistryFactory {
     @Override
     public Registry getRegistry(JRpcURL url) {
         String registryUri = url.getUri();
-        Registry registry = registries.get(registryUri);
-        if (registry == null) {
-            synchronized (AbstractRegistryFactory.class) {
-                registry = registries.get(registryUri);
-                if (registry == null) {
-                    log.info("create Registry for URL ({}) and put it into cache.", url);
-                    registry = createRegistry(url);
-                    registries.putIfAbsent(registryUri, registry);
-                }
-            }
-        }
-        return registry;
+        return registries.computeIfAbsent(registryUri, r -> {
+            Registry registry = createRegistry(url);
+            log.info("create Registry: [{}] for uri: [{}] and put it into cache.", registry, registryUri);
+            return registry;
+        });
     }
 
     protected abstract Registry createRegistry(JRpcURL url);

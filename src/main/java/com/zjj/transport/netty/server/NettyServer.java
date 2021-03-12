@@ -54,7 +54,7 @@ public class NettyServer extends AbstractServer {
 
 
     @Override
-    public boolean open() {
+    public synchronized boolean open() {
         if (isAvailable()) {
             log.warn("NettyServer has already open.");
             return true;
@@ -78,11 +78,11 @@ public class NettyServer extends AbstractServer {
         executor = new StandardThreadPoolExecutor(corePoolSize,
                 maximumPoolSize,
                 workerQueueSize,
-                new DefaultThreadFactory("NettyServer-" + url.getAddress(), true));
+                new DefaultThreadFactory("NettyServer-" + url.getPort(), true));
 
         handler = new NettyChannelHandler(this, messageHandler, executor);
 
-        log.info("NettyServer start open URL {}", url);
+        log.info("NettyServer start open address {}", url.getAddress());
         bootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .childOption(ChannelOption.TCP_NODELAY, true)
@@ -96,7 +96,7 @@ public class NettyServer extends AbstractServer {
                                 .addLast("server-handler", handler);
                     }
                 });
-        channel = bootstrap.bind(url.getPort()).syncUninterruptibly().channel();
+        channel = bootstrap.bind(url.getHost(), url.getPort()).syncUninterruptibly().channel();
         setLocalAddress((InetSocketAddress) channel.localAddress());
         state = ChannelState.ACTIVE;
         log.info("NettyServer channel {} is open success with URL {}", channel, url);
