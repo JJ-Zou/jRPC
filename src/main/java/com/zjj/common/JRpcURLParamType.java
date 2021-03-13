@@ -45,7 +45,10 @@ public enum JRpcURLParamType {
     method_config_prefix("method_config_prefix ", "methodConfig."),
     defaultClass("defaultClass", void.class),
     exportProtocol("exportProtocol", "jrpc:32121"),
+    exportRegistry("exportRegistry", "registryConfig"),
     exportPort("exportPort", 32121),
+    export("export", true),
+    exportHost("exportHost", "127.0.0.1"),
     ;
     private final String name;
     private String value;

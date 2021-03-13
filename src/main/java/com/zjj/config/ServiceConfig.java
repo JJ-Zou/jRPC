@@ -3,6 +3,7 @@ package com.zjj.config;
 import com.zjj.common.JRpcURL;
 import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.NetUtils;
+import com.zjj.config.annotation.Ignore;
 import com.zjj.extension.ExtensionLoader;
 import com.zjj.rpc.Exporter;
 import lombok.Getter;
@@ -10,33 +11,53 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Setter
 @Getter
-public class ServiceConfig<T> extends AbstractServiceConfig {
+public class ServiceConfig<T> extends AbstractInterfaceConfig {
     private static final long serialVersionUID = 7509808393399061064L;
+
     private static final ConfigHandler CONFIG_HANDLER = ExtensionLoader.getExtensionLoader(ConfigHandler.class).getDefaultExtension();
-
     private static final Set<String> ACTIVE_SERVICES = ConcurrentHashMap.newKeySet();
-
     private final Set<Exporter<T>> exporters = ConcurrentHashMap.newKeySet();
 
-    protected transient List<MethodConfig> methodConfigs;
-
+    private transient Class<T> interfaceClass;
     private transient T ref;
 
-    private transient Class<T> interfaceClass;
+    private String interfaceName;
+    protected String exportProtocol;
+    protected String exportHost;
+    protected boolean export;
 
+    @Ignore
+    protected boolean isDefault;
+    @Ignore
     private transient volatile boolean exported;
+    @Ignore
     private transient volatile boolean unexported;
 
-    @Override
+
+    /**
+     * 将 exportProtocol 解析为map
+     *
+     * @return map -> (key = protocol_id, value = export_port)
+     */
+    protected Map<String, Integer> checkAndGetProtocol() {
+        if (StringUtils.isEmpty(exportProtocol)) {
+            throw new IllegalStateException("Service exportProtocol must be set.");
+        }
+        return Arrays.stream(JRpcURLParamType.commaSplitPattern.getPattern().split(exportProtocol))
+                .map(protocol -> JRpcURLParamType.colonSplitPattern.getPattern().split(protocol))
+                .collect(Collectors.toMap(protocolArr -> protocolArr[0], protocolArr -> Integer.parseInt(protocolArr[1])));
+    }
+
     public void export() {
         if (exported) {
             log.warn("{} has already been exported, ignore this export request!", interfaceClass.getName());
@@ -45,15 +66,17 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         Map<String, Integer> protocolPorts = checkAndGetProtocol();
         checkRegistry();
         checkInterfaceAndMethods(interfaceClass, methodConfigs);
-        protocolConfigs.forEach(protocolConfig -> {
-            int exportPort = protocolPorts.get(protocolConfig.getId());
-            doExport(protocolConfig, exportPort);
-        });
+        protocolConfigs.stream()
+                .filter(p -> protocolPorts.containsKey(p.getId()))
+                .forEach(protocolConfig -> {
+                    int exportPort = protocolPorts.get(protocolConfig.getId());
+                    doExport(protocolConfig, exportPort);
+                });
         afterExport();
     }
 
     private void doExport(ProtocolConfig protocolConfig, int exportPort) {
-        String protocolName = protocolConfig.getName();
+        String protocolName = protocolConfig.getProtocolName();
         if (StringUtils.isEmpty(protocolName)) {
             protocolName = JRpcURLParamType.protocol.getValue();
         }
@@ -64,8 +87,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         Map<String, String> params = new HashMap<>();
         params.put(JRpcURLParamType.nodeType.getName(), JRpcURLParamType.nodeType.getValue());
         params.put(JRpcURLParamType.refreshTimestamp.getName(), String.valueOf(System.currentTimeMillis()));
-        refreshConfigs(params, protocolConfig, this);
-        refreshMethodConfigs(params, methodConfigs);
+        collectConfigs(params, protocolConfig, this);
+        collectMethodConfigs(params, methodConfigs);
         JRpcURL refUrl = new JRpcURL(protocolName, exportAddr, exportPort, interfaceClass.getName(), params);
         if (existService(refUrl)) {
             log.warn("{} already exist.", refUrl);
@@ -84,7 +107,6 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         return ACTIVE_SERVICES.contains(url.getIdentity());
     }
 
-    @Override
     public void unExport() {
         if (unexported) {
             return;
@@ -103,12 +125,10 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         exporters.clear();
     }
 
-    @Override
     public boolean isExported() {
         return exported;
     }
 
-    @Override
     public boolean isUnexported() {
         return unexported;
     }

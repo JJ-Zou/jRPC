@@ -5,17 +5,14 @@ import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.ReflectUtils;
 import com.zjj.exception.JRpcErrorMessage;
 import com.zjj.exception.JRpcFrameworkException;
-import com.zjj.registry.RegistryService;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Setter
 @Getter
@@ -23,15 +20,27 @@ import java.util.Set;
 public abstract class AbstractInterfaceConfig extends AbstractConfig {
     private static final long serialVersionUID = -7564123152873135129L;
 
-    protected transient Set<JRpcURL> registryUrls;
+    protected final Set<JRpcURL> registryUrls = ConcurrentHashMap.newKeySet();
+
+    protected transient Map<String, String> parameters = new HashMap<>();
     protected transient List<RegistryConfig> registryConfigs;
     protected transient List<ProtocolConfig> protocolConfigs;
+    protected transient List<MethodConfig> methodConfigs;
+
     protected String application;
     protected String module;
     protected String group;
     protected String version;
     protected String proxy;
 
+
+    public void addRegistryConfig(RegistryConfig... registryConfigs) {
+        this.registryConfigs.addAll(Arrays.asList(registryConfigs));
+    }
+
+    public void addProtocolConfig(ProtocolConfig... protocolConfigs) {
+        this.protocolConfigs.addAll(Arrays.asList(protocolConfigs));
+    }
 
     protected void checkRegistry() {
         convertRegistryConfigsToUrls();
@@ -63,12 +72,11 @@ public abstract class AbstractInterfaceConfig extends AbstractConfig {
         if (CollectionUtils.isEmpty(registryConfigs)) {
             return;
         }
-        registryUrls = new HashSet<>();
         registryConfigs.forEach(registryConfig -> {
             String protocol = registryConfig.getRegisterProtocol();
             String address = registryConfig.getAddress();
             Integer port = registryConfig.getPort();
-            String path = RegistryService.class.getName();
+            String path = registryConfig.getId();
             String[] addresses = JRpcURLParamType.commaSplitPattern.getPattern().split(address);
             Arrays.stream(addresses)
                     .forEach(a -> {

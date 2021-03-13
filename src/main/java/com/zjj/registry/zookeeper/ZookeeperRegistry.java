@@ -358,7 +358,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
             ChildData childData = event.getData();
             String path;
             String data;
-            log.info("[ZookeeperRegistry] listen event ({}) from path ({})。", event.getType(), childData.getPath());
+            log.info("[ZookeeperRegistry] listen event ({}) from path ({})。", event.getType(), childData);
             switch (event.getType()) {
                 case NODE_ADDED:
                     path = childData.getPath();

@@ -128,7 +128,7 @@ public class JRpcURL {
     }
 
     public String toSimpleString() {
-        return getUri() + "?group=" + getGroup();
+        return getUri() + "?group=" + getGroup() + "&version=" + getVersion();
     }
 
     public String toFullString() {

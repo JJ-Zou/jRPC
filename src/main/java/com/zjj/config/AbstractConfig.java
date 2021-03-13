@@ -2,8 +2,6 @@ package com.zjj.config;
 
 import com.zjj.common.JRpcURLParamType;
 import com.zjj.common.utils.ReflectUtils;
-import com.zjj.exception.JRpcErrorMessage;
-import com.zjj.exception.JRpcFrameworkException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
@@ -11,7 +9,6 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -54,45 +51,42 @@ public abstract class AbstractConfig implements Serializable {
         return tag.toLowerCase();
     }
 
-    protected void refreshConfigs(Map<String, String> params, AbstractConfig... abstractConfigs) {
-        Arrays.stream(abstractConfigs).forEach(abstractConfig -> abstractConfig.appendConfigParams(params, null));
+    protected void collectConfigs(Map<String, String> params, AbstractConfig... abstractConfigs) {
+        Arrays.stream(abstractConfigs).forEach(abstractConfig -> abstractConfig.collectConfigParams(params, null));
     }
 
-    protected void appendConfigParams(Map<String, String> params, String prefix) {
-        Method[] methods = getClass().getMethods();
-        Arrays.stream(methods)
+    @SuppressWarnings("unchecked")
+    protected void collectConfigParams(Map<String, String> params, String prefix) {
+        Arrays.stream(getClass().getMethods())
                 .forEach(method -> {
-                    if (ReflectUtils.isConfigGetter(method)) {
-                        String filedProperty = ReflectUtils.getPropertyFromGetter(method);
-                        filedProperty = (prefix == null) ? filedProperty : (prefix + JRpcURLParamType.period.getValue() + filedProperty);
-                        Object value = null;
-                        try {
+                    final Object value;
+                    try {
+                        if (ReflectUtils.isConfigGetter(method)) {
+                            String filedProperty = ReflectUtils.getPropertyFromGetter(method);
+                            if (prefix != null) {
+                                filedProperty = prefix + JRpcURLParamType.period.getValue() + filedProperty;
+                            }
                             value = method.invoke(this);
-                            if (value != null) {
+                            if (value != null && !String.valueOf(value).isEmpty()) {
                                 params.put(filedProperty, String.valueOf(value));
                             }
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            log.error("filed property {} cannot obtain.", filedProperty);
+                        } else if (method.getName().equals("getParameters")) {
+                            value = method.invoke(this);
+                            params.putAll((Map<String, String>) value);
                         }
-                    } else if (method.getName().equals("getParameters") && ReflectUtils.isMapGetter(method)) {
-                        Map<String, String> map;
-                        try {
-                            map = (Map<String, String>) method.invoke(this);
-                            params.putAll(map);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            log.error("Map<String, String> parameters property cannot obtain.");
-                        }
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        log.error("Collect params error from method {}, ignore it.", method);
                     }
                 });
 
     }
 
-    protected void refreshMethodConfigs(Map<String, String> param, List<MethodConfig> methodConfigs) {
+    protected void collectMethodConfigs(Map<String, String> param, List<MethodConfig> methodConfigs) {
         if (CollectionUtils.isEmpty(methodConfigs)) {
             return;
         }
         methodConfigs.forEach(methodConfig ->
-                methodConfig.appendConfigParams(param,
+                methodConfig.collectConfigParams(param,
                         JRpcURLParamType.method_config_prefix.getValue()
                                 + methodConfig.getName()
                                 + "("

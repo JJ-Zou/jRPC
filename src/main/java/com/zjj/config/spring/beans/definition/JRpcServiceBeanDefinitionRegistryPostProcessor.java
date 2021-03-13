@@ -1,4 +1,4 @@
-package com.zjj.config.spring.beans;
+package com.zjj.config.spring.beans.definition;
 
 import com.zjj.common.utils.JRpcComponentUtils;
 import com.zjj.config.spring.annotation.ClassPathJRpcComponentScanner;
@@ -16,15 +16,16 @@ import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
+import org.springframework.lang.NonNull;
 import org.springframework.util.ClassUtils;
 
 import java.util.*;
 
 @Slf4j
-public class JRpcBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegistryPostProcessor {
+public class JRpcServiceBeanDefinitionRegistryPostProcessor implements BeanDefinitionRegistryPostProcessor {
+
 
     /**
-     *
      * @param registry BeanDefinitionRegistry
      * @throws BeansException throw exception
      * @see ClassPathJRpcComponentScanner#doScan(String...)
@@ -60,6 +61,7 @@ public class JRpcBeanDefinitionRegistryPostProcessor implements BeanDefinitionRe
         if (packagesToScan.isEmpty()) {
             log.warn("JRpcComponent scan no package, it indicates there is annotation named @JRpcComponent!");
         }
+        // register ServiceBean
         ClassPathBeanDefinitionScanner scanner = new ClassPathJRpcComponentScanner(registry);
         scanner.addIncludeFilter(new AnnotationTypeFilter(JRpcService.class));
         int scan = scanner.scan(packagesToScan.toArray(new String[0]));
@@ -67,10 +69,8 @@ public class JRpcBeanDefinitionRegistryPostProcessor implements BeanDefinitionRe
     }
 
     @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        JRpcInstantiationAwareBeanPostProcessor postProcessor = new JRpcInstantiationAwareBeanPostProcessor();
-        beanFactory.addBeanPostProcessor(postProcessor);
-        log.info("BeanFactory {} add BeanPostProcessor: {}", beanFactory.getClass().getSimpleName(), postProcessor);
+    public void postProcessBeanFactory(@NonNull ConfigurableListableBeanFactory beanFactory) throws BeansException {
+        log.info("BeanFactory: {}", beanFactory);
     }
 
 }

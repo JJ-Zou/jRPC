@@ -7,6 +7,7 @@ import com.zjj.config.spring.ServiceBean;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -36,7 +37,7 @@ public class ConfigBeanManager {
     }
 
     public static <T> Collection<T> getConfigs(Class<T> clazz) {
-        return (Collection<T>) Collections.unmodifiableCollection(ABSTRACT_CONFIG_MAP.get(AbstractConfig.getTagName(clazz)).values());
+        return (Collection<T>) Collections.unmodifiableCollection(ABSTRACT_CONFIG_MAP.computeIfAbsent(AbstractConfig.getTagName(clazz), m -> new HashMap<>()).values());
     }
 
     public static Collection<ServiceBean> getServiceBeans() {

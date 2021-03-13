@@ -1,15 +1,16 @@
 package com.zjj.config.spring.annotation;
 
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.common.utils.BeanNameUtils;
 import com.zjj.common.utils.ReflectUtils;
 import com.zjj.config.spring.ServiceBean;
+import com.zjj.config.spring.beans.JRpcInstantiationAwareBeanPostProcessor;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.beans.factory.config.RuntimeBeanNameReference;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
@@ -30,7 +31,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.StringJoiner;
 
 public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanner {
     private static final String SERVICE_BEAN_RESOURCE_PATH =
@@ -46,7 +46,7 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
     }
 
     @Override
-    public int scan(String... basePackages) {
+    public int scan(@NonNull String... basePackages) {
         Set<BeanDefinitionHolder> beanDefinitionHolders = doScan(basePackages);
         return beanDefinitionHolders.size();
     }
@@ -81,16 +81,16 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
     /**
      * build beanDefinition for ref use type ServiceBean
      *
-     * @param beanClass ref class type
+     * @param beanClass          ref class type
      * @param annotationBeanName @JRpcService bean name
-     * @see com.zjj.config.spring.beans.JRpcInstantiationAwareBeanPostProcessor#postProcessProperties(PropertyValues, Object, String)
+     * @see JRpcInstantiationAwareBeanPostProcessor#postProcessProperties(PropertyValues, Object, String)
      */
     private void buildBeanDefinitionForServiceBean(Class<?> beanClass, String annotationBeanName) {
         JRpcService service = beanClass.getDeclaredAnnotation(JRpcService.class);
         AnnotationAttributes annotationAttributes = AnnotationUtils.getAnnotationAttributes(service, false, false);
         Class<?> interfaceClass = obtainInterfaceClass(beanClass, annotationAttributes);
         // change bean name
-        String beanName = rebuildBeanName(annotationAttributes, interfaceClass);
+        String beanName = BeanNameUtils.buildServiceBeanName(annotationAttributes, interfaceClass);
         // redefine beanDefinition
         Resource resource = getResourceLoader().getResource(SERVICE_BEAN_RESOURCE_PATH);
         try {
@@ -99,16 +99,30 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
             sbd.setBeanClass(ServiceBean.class);
             sbd.setResource(resource);
             sbd.setSource(resource);
+            String exportProtocol = annotationAttributes.getString(JRpcURLParamType.exportProtocol.getName());
             MutablePropertyValues propertyValues = sbd.getPropertyValues();
-            propertyValues.add("interfaceClass", interfaceClass)
-                    .add("ref", new RuntimeBeanReference(annotationBeanName))//com.zjj.demo.impl.HelloServiceImpl2
+            propertyValues
                     .add("beanName", beanName)
-                    .add("application", JRpcURLParamType.application.getValue())
-                    .add("module", JRpcURLParamType.module.getValue())
+                    // ServiceConfig
+                    .add("interfaceClass", interfaceClass)
+                    .add("interfaceName", interfaceClass.getName())
+                    .add("ref", new RuntimeBeanReference(annotationBeanName))
+                    .add("exportProtocol", exportProtocol)
+                    .add("exportHost", annotationAttributes.getString(JRpcURLParamType.exportHost.getName()))
+                    .add("export", annotationAttributes.getBoolean(JRpcURLParamType.export.getName()))
+                    // AbstractInterfaceConfig
+                    .add("application", annotationAttributes.getString(JRpcURLParamType.application.getName()))
+                    .add("module", annotationAttributes.getString(JRpcURLParamType.module.getName()))
                     .add("version", annotationAttributes.getString(JRpcURLParamType.version.getName()))
                     .add("group", annotationAttributes.getString(JRpcURLParamType.group.getName()))
             ;
-// TODO: 2021/3/11 ServiceBean配置
+            String[] protocolBeanNames = BeanNameUtils.getExportProtocolBeanName(exportProtocol);
+            Arrays.stream(protocolBeanNames)
+                    .forEach(protocolBeanName -> propertyValues.add("protocolConfigs", new RuntimeBeanReference(protocolBeanName)));
+            String exportRegistry = annotationAttributes.getString(JRpcURLParamType.exportRegistry.getName());
+            String[] registryBeanNames = BeanNameUtils.getExportRegistryBeanName(exportRegistry);
+            Arrays.stream(registryBeanNames)
+                    .forEach(registryBeanName -> propertyValues.add("registryConfigs", new RuntimeBeanReference(registryBeanName)));
             registry.registerBeanDefinition(beanName, sbd);
         } catch (IOException e) {
             throw new BeanDefinitionStoreException(
@@ -116,14 +130,6 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
         }
     }
 
-    private String rebuildBeanName(AnnotationAttributes annotationAttributes, Class<?> interfaceClass) {
-        StringJoiner stringJoiner = new StringJoiner(JRpcURLParamType.colon.getValue());
-        return stringJoiner.add(ServiceBean.class.getSimpleName())
-                .add(interfaceClass.getName())
-                .add(annotationAttributes.getString(JRpcURLParamType.version.getName()))
-                .add(annotationAttributes.getString(JRpcURLParamType.group.getName()))
-                .toString();
-    }
 
     private Class<?> obtainInterfaceClass(Class<?> beanClass, AnnotationAttributes annotationAttributes) {
         Class<?> interfaceClass = annotationAttributes.getClass("interfaceClass");

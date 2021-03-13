@@ -1,10 +1,12 @@
 package com.zjj.common.utils;
 
 import com.zjj.common.JRpcURLParamType;
+import com.zjj.config.annotation.Ignore;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -81,10 +83,7 @@ public class ReflectUtils {
         if (method.getReturnType() != void.class) {
             return false;
         }
-        if (Iterator.class.isAssignableFrom(method.getParameterTypes()[0])) {
-            return false;
-        }
-        if (Map.class.isAssignableFrom(method.getParameterTypes()[0])) {
+        if (!isPrimitiveOrWrapper(method.getParameterTypes()[0])) {
             return false;
         }
         return true;
@@ -219,17 +218,10 @@ public class ReflectUtils {
     }
 
     public static boolean isConfigGetter(Method method) {
-        String name = method.getName();
-        if (!name.startsWith("get") && !name.startsWith("is")) {
-            return false;
-        }
-        if (name.equals("get") || name.equals("is")) {
-            return false;
-        }
-        if (name.equals("getClass") || name.equals("getObject") || name.equals("isDefault") || name.equals("getIsDefault")) {
-            return false;
-        }
         if (!Modifier.isPublic(method.getModifiers())) {
+            return false;
+        }
+        if (Modifier.isStatic(method.getModifiers())) {
             return false;
         }
         if (method.getParameterCount() != 0) {
@@ -238,10 +230,12 @@ public class ReflectUtils {
         if (!isPrimitiveOrWrapper(method.getReturnType())) {
             return false;
         }
-        if (Map.class.isAssignableFrom(method.getReturnType())) {
+        try {
+            Field field = method.getDeclaringClass().getDeclaredField(getPropertyFromGetter(method));
+            return field.getAnnotation(Ignore.class) == null;
+        } catch (NoSuchFieldException e) {
             return false;
         }
-        return true;
     }
 
     public static boolean isMapGetter(Method method) {
@@ -265,5 +259,20 @@ public class ReflectUtils {
             return false;
         }
         return true;
+    }
+
+    public static void makeAccessible(Field filed) {
+        if ((!Modifier.isPublic(filed.getModifiers()) || !Modifier.isPublic(filed.getDeclaringClass().getModifiers()) || !Modifier.isFinal(filed.getModifiers()))
+                && !filed.isAccessible()) {
+            filed.setAccessible(true);
+        }
+    }
+
+    public static Class<?> getGenericType(Class<?> clazz) {
+        if (clazz.isArray()) {
+            return getGenericType(clazz.getComponentType());
+        }
+
+        return clazz;
     }
 }
