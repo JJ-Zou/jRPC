@@ -1,8 +1,8 @@
 package com.zjj;
 
-import com.zjj.config.ProtocolConfig;
-import com.zjj.config.RegistryConfig;
-import com.zjj.config.spring.annotation.EnableJRpc;
+import com.zjj.jrpc.config.ProtocolConfig;
+import com.zjj.jrpc.config.RegistryConfig;
+import com.zjj.jrpc.config.spring.annotation.EnableJRpc;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;

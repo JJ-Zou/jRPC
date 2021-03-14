@@ -1,0 +1,1 @@
+endpointFactory=com.zjj.jrpc.transport.netty.server.NettyEndpointFactory

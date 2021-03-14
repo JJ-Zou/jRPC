@@ -1,0 +1,1 @@
+serialization=com.zjj.jrpc.serialize.hessian2.Hessian2Serialization

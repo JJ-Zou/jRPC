@@ -3,12 +3,13 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <groupId>com.zjj</groupId>
+    <groupId>com.zjj.jrpc</groupId>
     <artifactId>jRPC</artifactId>
     <version>1.0</version>
     <modules>
         <module>jrpc-demo</module>
         <module>jrpc-core</module>
+        <module>jrpc-test</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
 
@@ -24,6 +25,7 @@
         <lombok.version>1.18.8</lombok.version>
         <junit.version>4.12</junit.version>
         <springboot.version>2.3.9.RELEASE</springboot.version>
+        <spring.version>5.2.13.RELEASE</spring.version>
         <commonslang.version>3.11</commonslang.version>
         <hessian2.version>4.0.65</hessian2.version>
     </properties>
@@ -31,7 +33,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.zjj</groupId>
+                <groupId>com.zjj.jrpc</groupId>
                 <artifactId>jrpc-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -44,6 +46,16 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-test</artifactId>
                 <version>${springboot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.version}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>

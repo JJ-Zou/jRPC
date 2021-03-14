@@ -1,6 +1,6 @@
 package com.zjj.service;
 
-import com.zjj.config.spring.annotation.JRpcReference;
+import com.zjj.jrpc.config.spring.annotation.JRpcReference;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;

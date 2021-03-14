@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>jRPC</artifactId>
-        <groupId>com.zjj</groupId>
+        <groupId>com.zjj.jrpc</groupId>
         <version>1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -16,18 +16,23 @@
         <module>demo-provider</module>
         <module>demo-consumer</module>
     </modules>
-<dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>com.zjj</groupId>
-            <artifactId>demo-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zjj</groupId>
-            <artifactId>jrpc-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
-</dependencyManagement>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.zjj.jrpc</groupId>
+                <artifactId>demo-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.zjj.jrpc</groupId>
+                <artifactId>jrpc-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+                <version>${springboot.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

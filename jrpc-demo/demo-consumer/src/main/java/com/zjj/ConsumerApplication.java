@@ -1,14 +1,12 @@
 package com.zjj;
 
-import com.zjj.common.utils.ReflectUtils;
-import com.zjj.config.MethodConfig;
-import com.zjj.config.ProtocolConfig;
-import com.zjj.config.ReferenceConfig;
-import com.zjj.config.RegistryConfig;
-import com.zjj.config.spring.annotation.JRpcReference;
-import com.zjj.config.spring.annotation.JRpcService;
+import com.zjj.jrpc.common.utils.ReflectUtils;
+import com.zjj.jrpc.config.MethodConfig;
+import com.zjj.jrpc.config.ProtocolConfig;
+import com.zjj.jrpc.config.ReferenceConfig;
+import com.zjj.jrpc.config.RegistryConfig;
+import com.zjj.jrpc.config.spring.annotation.JRpcReference;
 import com.zjj.service.HelloService;
-import jdk.nashorn.internal.ir.annotations.Reference;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
