@@ -11,12 +11,10 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Setter
@@ -27,7 +25,6 @@ public class ServiceConfig<T> extends AbstractInterfaceConfig {
     private static final ConfigHandler CONFIG_HANDLER = ExtensionLoader.getExtensionLoader(ConfigHandler.class).getDefaultExtension();
     private static final Set<String> ACTIVE_SERVICES = ConcurrentHashMap.newKeySet();
     private final Set<Exporter<T>> exporters = ConcurrentHashMap.newKeySet();
-    protected String exportProtocol;
     protected String exportHost;
     protected boolean export;
     @Ignore
@@ -42,18 +39,10 @@ public class ServiceConfig<T> extends AbstractInterfaceConfig {
     private transient volatile boolean unexported;
 
 
-    /**
-     * 将 exportProtocol 解析为map
-     *
-     * @return map -> (key = protocol_id, value = export_port)
-     */
-    protected Map<String, Integer> checkAndGetProtocol() {
-        if (StringUtils.isEmpty(exportProtocol)) {
-            throw new IllegalStateException("Service exportProtocol must be set.");
+    protected void checkAndGetProtocol() {
+        if (getProtocolConfigs().isEmpty()) {
+            throw new IllegalStateException("Service protocolConfig must be set.");
         }
-        return Arrays.stream(JRpcURLParamType.COMMA_SPLIT_PATTERN.getPattern().split(exportProtocol))
-                .map(protocol -> JRpcURLParamType.COLON_SPLIT_PATTERN.getPattern().split(protocol))
-                .collect(Collectors.toMap(protocolArr -> protocolArr[0], protocolArr -> Integer.parseInt(protocolArr[1])));
     }
 
     public void export() {
@@ -61,20 +50,16 @@ public class ServiceConfig<T> extends AbstractInterfaceConfig {
             log.warn("{} has already been exported, ignore this export request!", interfaceClass.getName());
             return;
         }
-        Map<String, Integer> protocolPorts = checkAndGetProtocol();
+        checkAndGetProtocol();
         checkRegistry();
         checkInterfaceAndMethods(interfaceClass, methodConfigs);
-        protocolConfigs.stream()
-                .filter(p -> protocolPorts.containsKey(p.getId()))
-                .forEach(protocolConfig -> {
-                    int exportPort = protocolPorts.get(protocolConfig.getId());
-                    doExport(protocolConfig, exportPort);
-                });
+        protocolConfigs.forEach(this::doExport);
         afterExport();
     }
 
-    private void doExport(ProtocolConfig protocolConfig, int exportPort) {
+    private void doExport(ProtocolConfig protocolConfig) {
         String protocolName = protocolConfig.getProtocolName();
+        int exportPort = protocolConfig.getPort();
         if (StringUtils.isEmpty(protocolName)) {
             protocolName = JRpcURLParamType.PROTOCOL.getValue();
         }
@@ -88,13 +73,15 @@ public class ServiceConfig<T> extends AbstractInterfaceConfig {
         params.put(JRpcURLParamType.REFRESH_TIMESTAMP.getName(), String.valueOf(System.currentTimeMillis()));
         collectConfigs(params, protocolConfig, this);
         collectMethodConfigs(params, methodConfigs);
-        JRpcURL refUrl = new JRpcURL(protocolName, exportAddr, exportPort, interfaceClass.getName(), params);
-        refUrl.setExportAddress(localHostString + ":" + exportPort);
-        if (existService(refUrl)) {
-            log.warn("{} already exist.", refUrl);
+        // exportAddr is the real IP
+        JRpcURL exportServiceUrl = new JRpcURL(protocolName, exportAddr, exportPort, interfaceClass.getName(), params);
+        // bindAddress is netty server bind address
+        exportServiceUrl.setBindAddress(localHostString + ":" + exportPort);
+        if (existService(exportServiceUrl)) {
+            log.warn("{} already exist.", exportServiceUrl);
             return;
         }
-        Exporter<T> exporter = CONFIG_HANDLER.export(interfaceClass, ref, registryUrls, refUrl);
+        Exporter<T> exporter = CONFIG_HANDLER.export(interfaceClass, ref, registryUrls, exportServiceUrl);
         exporters.add(exporter);
     }
 

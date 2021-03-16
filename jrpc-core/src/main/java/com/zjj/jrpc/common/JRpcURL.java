@@ -20,7 +20,7 @@ public class JRpcURL {
     private final String path;
     private final Map<String, String> parameters;
 
-    private String exportAddress;
+    private String bindAddress;
 
     private volatile transient Map<String, Number> cachedNumber;
 
@@ -149,9 +149,9 @@ public class JRpcURL {
         return builder.toString();
     }
 
-    public String getExportAddress() {
-        if (exportAddress != null) {
-            return exportAddress;
+    public String getBindAddress() {
+        if (bindAddress != null) {
+            return bindAddress;
         }
         if (port <= 0) {
             return host;
@@ -167,8 +167,8 @@ public class JRpcURL {
         return host;
     }
 
-    public void setExportAddress(String exportAddress) {
-        this.exportAddress = exportAddress;
+    public void setBindAddress(String bindAddress) {
+        this.bindAddress = bindAddress;
     }
 
     public String getVersion() {
@@ -192,7 +192,7 @@ public class JRpcURL {
     }
 
     public String getProtocolKey() {
-        return getProtocol() + "://" + getExportAddress() + "/" + getServiceKey();
+        return getProtocol() + "://" + getBindAddress() + "/" + getServiceKey();
     }
 
     public String getServiceKey() {

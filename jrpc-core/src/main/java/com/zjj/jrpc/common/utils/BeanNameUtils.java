@@ -5,7 +5,6 @@ import com.zjj.jrpc.config.spring.ServiceBean;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.StringJoiner;
 
 public class BeanNameUtils {
@@ -13,9 +12,8 @@ public class BeanNameUtils {
     }
 
     public static String[] getExportProtocolBeanName(CharSequence exportProtocol) {
-        return Arrays.stream(JRpcURLParamType.COMMA_SPLIT_PATTERN.getPattern().split(exportProtocol))
-                .map(str -> JRpcURLParamType.COLON_SPLIT_PATTERN.getPattern().split(str)[0])
-                .toArray(String[]::new);
+        return JRpcURLParamType.COMMA_SPLIT_PATTERN.getPattern().split(exportProtocol);
+
     }
 
     public static String[] getExportRegistryBeanName(CharSequence registry) {

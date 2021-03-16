@@ -14,6 +14,7 @@ import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanNameGenerator;
+import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
@@ -110,7 +111,6 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
                     .add("interfaceClass", interfaceClass)
                     .add("refInterfaceName", interfaceClass.getName())
                     .add("ref", new RuntimeBeanReference(annotationBeanName))
-                    .add("exportProtocol", exportProtocol)
                     .add("exportHost", annotationAttributes.getString(JRpcURLParamType.EXPORT_HOST.getName()))
                     .add("export", annotationAttributes.getBoolean(JRpcURLParamType.EXPORT.getName()))
                     // AbstractInterfaceConfig
@@ -121,13 +121,17 @@ public class ClassPathJRpcComponentScanner extends ClassPathBeanDefinitionScanne
             ;
             String[] protocolBeanNames = BeanNameUtils.getExportProtocolBeanName(exportProtocol);
             Assert.notEmpty(protocolBeanNames, "must config protocol!");
+            ManagedList<RuntimeBeanReference> protocolConfigs = new ManagedList<>();
             Arrays.stream(protocolBeanNames)
-                    .forEach(protocolBeanName -> propertyValues.add("protocolConfigs", new RuntimeBeanReference(protocolBeanName)));
+                    .forEach(protocolBeanName -> protocolConfigs.add(new RuntimeBeanReference(protocolBeanName)));
+            propertyValues.add("protocolConfigs", protocolConfigs);
             String exportRegistry = annotationAttributes.getString(JRpcURLParamType.EXPORT_REGISTRY.getName());
             String[] registryBeanNames = BeanNameUtils.getExportRegistryBeanName(exportRegistry);
             Assert.notEmpty(registryBeanNames, "must config registry!");
+            ManagedList<RuntimeBeanReference> registryConfigs = new ManagedList<>();
             Arrays.stream(registryBeanNames)
-                    .forEach(registryBeanName -> propertyValues.add("registryConfigs", new RuntimeBeanReference(registryBeanName)));
+                    .forEach(registryBeanName -> registryConfigs.add(new RuntimeBeanReference(registryBeanName)));
+            propertyValues.add("registryConfigs", registryConfigs);
             registry.registerBeanDefinition(beanName, sbd);
         } catch (IOException e) {
             throw new BeanDefinitionStoreException(

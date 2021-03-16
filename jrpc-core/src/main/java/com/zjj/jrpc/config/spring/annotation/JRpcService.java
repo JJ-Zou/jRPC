@@ -25,6 +25,8 @@ public @interface JRpcService {
 
     String exportHost() default "";
 
+    int exportPort() default 0;
+
     String registry() default "";
 
     boolean export() default true;

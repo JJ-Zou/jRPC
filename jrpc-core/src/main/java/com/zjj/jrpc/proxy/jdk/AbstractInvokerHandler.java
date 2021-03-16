@@ -1,4 +1,4 @@
-package com.zjj.jrpc.proxy.support;
+package com.zjj.jrpc.proxy.jdk;
 
 import com.zjj.jrpc.clutter.Clutter;
 import com.zjj.jrpc.common.JRpcURLParamType;
@@ -98,4 +98,5 @@ public abstract class AbstractInvokerHandler<T> implements InvocationHandler {
     }
 
     public abstract Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable;
+
 }

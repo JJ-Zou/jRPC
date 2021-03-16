@@ -21,7 +21,7 @@ public abstract class AbstractEndpointFactory implements EndpointFactory {
 
     @Override
     public Server createServer(JRpcURL url, MessageHandler handler) {
-        String addressKey = url.getExportAddress();
+        String addressKey = url.getBindAddress();
         return serverMap.computeIfAbsent(addressKey, s -> getServer(url, handler));
     }
 
@@ -30,7 +30,7 @@ public abstract class AbstractEndpointFactory implements EndpointFactory {
                 .getExtensionLoader(HeartBeatFactory.class)
                 .getDefaultExtension().wrap(handler);
         Server server = doCreateServer(url, wrapHandler);
-        log.info("{} create server {} with url {}", this.getClass().getSimpleName(), server, url.getExportAddress());
+        log.info("{} create server {} with url {}", this.getClass().getSimpleName(), server, url.getBindAddress());
         return server;
     }
 

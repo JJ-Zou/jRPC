@@ -110,6 +110,8 @@ public abstract class AbstractInterfaceConfig extends AbstractConfig {
         }
         methodConfigs.forEach(methodConfig -> {
             Method method = Arrays.stream(interfaceClass.getMethods())
+                    // find first method in interface whose method name equals in MethodConfig
+                    // so overloading is not supported
                     .filter(m -> m.getName().equals(methodConfig.getName()))
                     .findFirst()
                     .orElseThrow(() -> new JRpcFrameworkException("Cannot find method " + methodConfig.getName() + " in the interface " + interfaceClass.getName()));

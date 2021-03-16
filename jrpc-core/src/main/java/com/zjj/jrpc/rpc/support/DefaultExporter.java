@@ -32,7 +32,7 @@ public class DefaultExporter<T> extends AbstractExporter<T> {
     @Override
     public void unExport() {
         String protocolKey = url.getProtocolKey();
-        String address = url.getExportAddress();
+        String address = url.getBindAddress();
         PROTOCOL.destroy(protocolKey);
         if (PROVIDER_ROUTERS.containsKey(address)) {
             PROVIDER_ROUTERS.get(address).removeProvider(provider);
@@ -51,7 +51,7 @@ public class DefaultExporter<T> extends AbstractExporter<T> {
     }
 
     protected ProviderRouter obtainProviderRouter(JRpcURL url) {
-        String key = url.getExportAddress();
+        String key = url.getBindAddress();
         ProviderRouter providerRouter = PROVIDER_ROUTERS.computeIfAbsent(key, p -> new ProviderRouter());
         providerRouter.addProvider(provider);
         return providerRouter;

@@ -8,7 +8,7 @@ public class ZkUtils {
     }
 
     public static String toNodePath(JRpcURL url, ZkNodeType nodeType) {
-        return toNodeTypePath(url, nodeType) + "/" + url.getExportAddress();
+        return toNodeTypePath(url, nodeType) + "/" + url.getBindAddress();
     }
 
     public static String toNodeTypePath(JRpcURL url, ZkNodeType nodeType) {

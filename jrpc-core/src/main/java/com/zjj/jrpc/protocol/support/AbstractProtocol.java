@@ -17,11 +17,12 @@ public abstract class AbstractProtocol implements Protocol {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Exporter<T> export(Provider<T> provider, JRpcURL url) {
-        String protocolKey = url.getProtocolKey();
-        Exporter<T> exporter = (Exporter<T>) exporters.computeIfAbsent(protocolKey, e -> doExport(provider, url));
+    public <T> Exporter<T> export(Provider<T> provider, JRpcURL serviceUrl) {
+        String protocolKey = serviceUrl.getProtocolKey();
+        Exporter<T> exporter = (Exporter<T>) exporters
+                .computeIfAbsent(protocolKey, e -> doExport(provider, serviceUrl));
         exporter.init();
-        log.info("{} export service: {} success.", this.getClass().getSimpleName(), url);
+        log.info("{} export service: {} success.", this.getClass().getSimpleName(), serviceUrl);
         return exporter;
     }
 

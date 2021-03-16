@@ -1,4 +1,4 @@
-package com.zjj.jrpc.proxy.support;
+package com.zjj.jrpc.proxy.jdk;
 
 import com.zjj.jrpc.clutter.Clutter;
 import com.zjj.jrpc.common.utils.ReflectUtils;
@@ -9,9 +9,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.List;
 
-public class InvokerHandler<T> extends AbstractInvokerHandler<T> implements InvocationHandler {
+public class JdkInvokerHandler<T> extends AbstractInvokerHandler<T> implements InvocationHandler {
 
-    public InvokerHandler(List<Clutter<T>> clutters, Class<T> clazz) {
+    public JdkInvokerHandler(List<Clutter<T>> clutters, Class<T> clazz) {
         super(clutters, clazz, clazz.getName());
     }
 
