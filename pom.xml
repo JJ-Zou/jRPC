@@ -7,9 +7,11 @@
     <artifactId>jRPC</artifactId>
     <version>1.0</version>
     <modules>
-        <module>jrpc-demo</module>
         <module>jrpc-core</module>
-        <module>jrpc-test</module>
+        <module>demo-api</module>
+        <module>jrpc-demo-api</module>
+        <module>jrpc-demo-provider</module>
+        <module>jrpc-demo-consumer</module>
     </modules>
     <modelVersion>4.0.0</modelVersion>
 
@@ -28,15 +30,11 @@
         <spring.version>5.2.13.RELEASE</spring.version>
         <commonslang.version>3.11</commonslang.version>
         <hessian2.version>4.0.65</hessian2.version>
+        <cglib.version>3.3.0</cglib.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>com.zjj.jrpc</groupId>
-                <artifactId>jrpc-core</artifactId>
-                <version>${project.version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
@@ -93,6 +91,11 @@
                 <groupId>com.caucho</groupId>
                 <artifactId>hessian</artifactId>
                 <version>${hessian2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cglib</groupId>
+                <artifactId>cglib</artifactId>
+                <version>${cglib.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
