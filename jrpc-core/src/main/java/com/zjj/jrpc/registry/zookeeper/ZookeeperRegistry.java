@@ -257,6 +257,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
     private void deletePath(String path) {
         try {
             client.delete().deletingChildrenIfNeeded().forPath(path);
+            persistentExistNodePath.remove(path);
         } catch (NoNodeException e) {
 
         } catch (Exception e) {
