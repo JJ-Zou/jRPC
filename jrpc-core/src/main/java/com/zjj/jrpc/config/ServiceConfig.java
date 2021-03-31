@@ -39,7 +39,7 @@ public class ServiceConfig<T> extends AbstractInterfaceConfig {
     private transient volatile boolean unexported;
 
 
-    protected void checkAndGetProtocol() {
+    protected void checkProtocol() {
         if (getProtocolConfigs().isEmpty()) {
             throw new IllegalStateException("Service protocolConfig must be set.");
         }
@@ -50,7 +50,7 @@ public class ServiceConfig<T> extends AbstractInterfaceConfig {
             log.warn("{} has already been exported, ignore this export request!", interfaceClass.getName());
             return;
         }
-        checkAndGetProtocol();
+        checkProtocol();
         checkRegistry();
         checkInterfaceAndMethods(interfaceClass, methodConfigs);
         protocolConfigs.forEach(this::doExport);

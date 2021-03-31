@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 public class JRpcInstantiationAwareBeanPostProcessor extends InstantiationAwareBeanPostProcessorAdapter
         implements MergedBeanDefinitionPostProcessor, BeanFactoryAware {
 
+    private static final Object EMPTY = new Object();
+
     private final Map<String, InjectionMetadata> injectionMetadataCache = new ConcurrentHashMap<>();
     private final Map<String, Object> injectObjectsCache = new ConcurrentHashMap<>();
     private final Map<String, ReferenceBean<?>> referenceBeansCache = new ConcurrentHashMap<>();
@@ -117,9 +119,14 @@ public class JRpcInstantiationAwareBeanPostProcessor extends InstantiationAwareB
     protected Object doGetInjectObject(AnnotationAttributes attributes, Object bean, String beanName, Class<?> type, InjectionMetadata.InjectedElement metadata) {
         String serviceName = BeanNameUtils.buildServiceBeanName(attributes, type);
         String referName = BeanNameUtils.buildReferenceBeanName(attributes, type);
-        return referenceBeansCache
-                .computeIfAbsent(referName, r -> createRef(referName, attributes, type))
-                .getRef();
+        try {
+            return referenceBeansCache
+                    .computeIfAbsent(referName, r -> createRef(referName, attributes, type))
+                    .getObject();
+        } catch (Exception e) {
+            log.error("getInjectObject beanName {} fail.", referName);
+            return EMPTY;
+        }
     }
 
     private <T> ReferenceBean<T> createRef(String referName, AnnotationAttributes attributes, Class<T> type) {
@@ -162,6 +169,9 @@ public class JRpcInstantiationAwareBeanPostProcessor extends InstantiationAwareB
         protected void inject(@NonNull Object bean, String requestingBeanName, PropertyValues pvs) throws Throwable {
             Class<?> fieldType = field.getType();
             Object injectObject = getInjectObject(attributes, bean, requestingBeanName, fieldType, this);
+            if (EMPTY.equals(injectObject)) {
+                return;
+            }
             ReflectionUtils.makeAccessible(field);
             field.set(bean, injectObject);
         }

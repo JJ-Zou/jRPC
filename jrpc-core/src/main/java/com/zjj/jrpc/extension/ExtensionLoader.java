@@ -58,6 +58,14 @@ public class ExtensionLoader<T> {
     }
 
     public T getDefaultExtension() {
+        final SPI defaultSpi = type.getAnnotation(SPI.class);
+        String defaultName;
+        if (defaultSpi != null) {
+            defaultName = defaultSpi.value().trim();
+            if (defaultName.length() > 1) {
+                return getExtension(defaultName);
+            }
+        }
         return getExtension(cachedDefaultKey);
     }
 

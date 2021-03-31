@@ -1,46 +1,31 @@
-package com.zjj.jrpc.proxy.jdk;
+package com.zjj.jrpc.proxy.support;
 
 import com.zjj.jrpc.clutter.Clutter;
 import com.zjj.jrpc.common.JRpcURLParamType;
+import com.zjj.jrpc.common.utils.ReflectUtils;
+import com.zjj.jrpc.common.utils.RequestIdUtils;
 import com.zjj.jrpc.exception.JRpcServiceConsumerException;
 import com.zjj.jrpc.rpc.Reference;
 import com.zjj.jrpc.rpc.Request;
 import com.zjj.jrpc.rpc.Response;
 import com.zjj.jrpc.rpc.context.RpcContext;
+import com.zjj.jrpc.rpc.message.DefaultRequest;
 import org.springframework.util.StringUtils;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class AbstractInvokerHandler<T> implements InvocationHandler {
+public abstract class AbstractInvokerHandler<T> {
     protected final List<Clutter<T>> clutters;
     protected final Class<T> clazz;
     protected final String interfaceName;
 
-    protected AbstractInvokerHandler(List<Clutter<T>> clutters, Class<T> clazz, String interfaceName) {
-        this.clutters = clutters;
+    protected AbstractInvokerHandler(Class<T> clazz, String interfaceName, List<Clutter<T>> clutters) {
         this.clazz = clazz;
         this.interfaceName = interfaceName;
-    }
-
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if (method.getDeclaringClass() != this.clazz) {
-            switch (method.getName()) {
-                case "toString":
-                    return proxyToString();
-                case "hashCode":
-                    return proxyHashcode(args[0]);
-                case "equals":
-                    return proxyEquals(args[0]);
-                default:
-                    throw new IllegalStateException("Unexpected value: " + method.getName());
-            }
-        }
-        return doInvoke(proxy, method, args);
+        this.clutters = clutters;
     }
 
     public boolean proxyEquals(Object o) {
@@ -71,7 +56,7 @@ public abstract class AbstractInvokerHandler<T> implements InvocationHandler {
         return builder.toString();
     }
 
-    Object invoke(Request request, Class<?> returnType) {
+    Object invoke(Request request) {
         RpcContext rpcContext = RpcContext.getRpcContext();
         Map<String, String> attachments = rpcContext.getAttachments();
         attachments.forEach(request::setAttachment);
@@ -83,7 +68,6 @@ public abstract class AbstractInvokerHandler<T> implements InvocationHandler {
             request.setAttachment(JRpcURLParamType.VERSION.getName(), clutter.getUrl().getVersion());
             request.setAttachment(JRpcURLParamType.APPLICATION.getName(), clutter.getUrl().getApplication());
             request.setAttachment(JRpcURLParamType.MODULE.getName(), clutter.getUrl().getModule());
-
             Response response = null;
             try {
                 response = clutter.call(request);
@@ -97,6 +81,27 @@ public abstract class AbstractInvokerHandler<T> implements InvocationHandler {
         throw new IllegalStateException();
     }
 
-    public abstract Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable;
+    public Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable {
+        if (method.getDeclaringClass() != this.clazz) {
+            switch (method.getName()) {
+                case "toString":
+                    return proxyToString();
+                case "hashCode":
+                    return proxyHashcode(args[0]);
+                case "equals":
+                    return proxyEquals(args[0]);
+                default:
+                    throw new IllegalStateException("Unexpected value: " + method.getName());
+            }
+        }
+        DefaultRequest request = DefaultRequest.builder()
+                .requestId(RequestIdUtils.getRequestId())
+                .interfaceName(this.interfaceName)
+                .methodName(method.getName())
+                .arguments(args)
+                .parameterSign(ReflectUtils.getParamSigns(method))
+                .build();
+        return invoke(request);
+    }
 
 }

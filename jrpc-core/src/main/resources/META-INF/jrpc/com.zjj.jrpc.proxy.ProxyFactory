@@ -1,2 +1,2 @@
-proxyFactory=com.zjj.jrpc.proxy.jdk.JdkProxyFactory
+jdk=com.zjj.jrpc.proxy.jdk.JdkProxyFactory
 cglib=com.zjj.jrpc.proxy.cglib.CglibProxyFactory

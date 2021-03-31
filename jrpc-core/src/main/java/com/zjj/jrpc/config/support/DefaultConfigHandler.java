@@ -18,8 +18,6 @@ import java.util.List;
 
 public class DefaultConfigHandler implements ConfigHandler {
 
-    private static final ProxyFactory PROXY_FACTORY = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getDefaultExtension();
-
     @Override
     public <T> ClutterNotify<T> getClutterNotify(Class<T> interfaceClass, Collection<JRpcURL> registryUrls, JRpcURL refUrl) {
         return new ClutterNotify<>(interfaceClass, registryUrls, refUrl);
@@ -45,6 +43,7 @@ public class DefaultConfigHandler implements ConfigHandler {
 
     @Override
     public <T> T refer(Class<T> interfaceClass, List<Clutter<T>> clutters) {
-        return PROXY_FACTORY.getProxy(interfaceClass, clutters);
+        ProxyFactory factory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getDefaultExtension();
+        return factory.getProxy(interfaceClass, clutters);
     }
 }

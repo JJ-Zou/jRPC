@@ -8,7 +8,6 @@
     <version>1.0</version>
     <modules>
         <module>jrpc-core</module>
-        <module>demo-api</module>
         <module>jrpc-demo-api</module>
         <module>jrpc-demo-provider</module>
         <module>jrpc-demo-consumer</module>

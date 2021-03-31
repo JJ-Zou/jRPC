@@ -22,7 +22,6 @@ public abstract class AbstractRegistry implements Registry {
 
     protected AbstractRegistry(JRpcURL url) {
         this.registryUrl = url;
-
     }
 
     @Override

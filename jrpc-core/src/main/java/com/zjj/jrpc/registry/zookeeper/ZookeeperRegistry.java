@@ -135,7 +135,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
         if (!checkExists(parentPath)) {
             return Collections.emptyList();
         }
-        return nodeTChildrenUrls(url, parentPath);
+        return nodeToChildrenUrls(url, parentPath);
     }
 
     private void createNode(JRpcURL url, ZkNodeType nodeType) {
@@ -308,7 +308,7 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
         return false;
     }
 
-    private List<JRpcURL> nodeTChildrenUrls(JRpcURL url, String parentPath) {
+    private List<JRpcURL> nodeToChildrenUrls(JRpcURL url, String parentPath) {
         List<JRpcURL> ret = new ArrayList<>();
         // 服务节点路径为 host:port
         for (String node : getChildren(parentPath)) {
@@ -365,19 +365,19 @@ public class ZookeeperRegistry extends ServiceFailbackRegistry implements Closea
                     path = childData.getPath();
                     data = new String(childData.getData(), StandardCharsets.UTF_8);
                     log.info("NODE_ADDED path [{}] data [{}]。", path, data);
-                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeTChildrenUrls(url, path));
+                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeToChildrenUrls(url, path));
                     break;
                 case NODE_UPDATED:
                     path = childData.getPath();
                     data = new String(childData.getData(), StandardCharsets.UTF_8);
                     log.info("NODE_UPDATED path [{}] data [{}]。", path, data);
-                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeTChildrenUrls(url, path));
+                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeToChildrenUrls(url, path));
                     break;
                 case NODE_REMOVED:
                     path = childData.getPath();
                     data = new String(childData.getData(), StandardCharsets.UTF_8);
                     log.info("NODE_REMOVED path [{}] data [{}]。", path, data);
-                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeTChildrenUrls(url, path));
+                    serviceListener.notifyService(url, registry.getRegistryUrl(), registry.nodeToChildrenUrls(url, path));
                     break;
                 case INITIALIZED:
                     break;

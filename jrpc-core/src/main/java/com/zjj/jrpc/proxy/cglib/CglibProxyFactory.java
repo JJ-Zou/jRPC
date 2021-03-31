@@ -7,8 +7,14 @@ import net.sf.cglib.proxy.Enhancer;
 import java.util.List;
 
 public class CglibProxyFactory implements ProxyFactory {
+
     @Override
     public <T> T getProxy(Class<T> clazz, List<Clutter<T>> clutters) {
-        return (T) Enhancer.create(clazz, new CglibMethodInterceptor<>(clutters, clazz));
+        Enhancer enhancer = new Enhancer();
+        enhancer.setSuperclass(clazz);
+        enhancer.setCallback(new CglibMethodInterceptor<>(clazz, clutters));
+        return (T) enhancer.create();
     }
+
+
 }

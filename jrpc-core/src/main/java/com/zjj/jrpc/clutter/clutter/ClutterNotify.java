@@ -82,7 +82,6 @@ public class ClutterNotify<T> implements NotifyListener {
             registerReferences
                     .computeIfAbsent(registryUrl, m -> new ConcurrentHashMap<>())
                     .put(url, protocol.refer(interfaceClass, clientUrl, url));
-
         });
         refreshClutters();
     }
