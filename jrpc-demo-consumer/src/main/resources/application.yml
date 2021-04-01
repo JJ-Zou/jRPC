@@ -1,7 +1,0 @@
-jrpc:
-  protocolName: jrpc
-  port1: 23570
-  port2: 23571
-
-server:
-  port: 8081
