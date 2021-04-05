@@ -20,6 +20,6 @@ public class ZkUtils {
     }
 
     public static String toGroupPath(JRpcURL url) {
-        return "/jrpc" + "/" + url.getGroup();
+        return "/" + url.getProtocol() + "/" + url.getGroup();
     }
 }
