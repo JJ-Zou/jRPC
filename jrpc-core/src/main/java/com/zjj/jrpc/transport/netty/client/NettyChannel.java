@@ -10,7 +10,7 @@ import com.zjj.jrpc.extension.ExtensionLoader;
 import com.zjj.jrpc.rpc.Request;
 import com.zjj.jrpc.rpc.Response;
 import com.zjj.jrpc.rpc.ResponseFuture;
-import com.zjj.jrpc.rpc.support.DefaultResponseFuture;
+import com.zjj.jrpc.rpc.message.DefaultResponseFuture;
 import com.zjj.jrpc.transport.HeartBeatFactory;
 import com.zjj.jrpc.transport.TransChannel;
 import com.zjj.jrpc.transport.netty.ChannelState;
@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.CompletableFuture;
 
 
 @Slf4j

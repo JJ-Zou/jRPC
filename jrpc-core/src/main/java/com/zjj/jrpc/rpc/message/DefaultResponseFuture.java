@@ -1,4 +1,4 @@
-package com.zjj.jrpc.rpc.support;
+package com.zjj.jrpc.rpc.message;
 
 import com.zjj.jrpc.common.JRpcURL;
 import com.zjj.jrpc.exception.JRpcErrorMessage;
