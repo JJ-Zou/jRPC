@@ -29,6 +29,7 @@
         <spring.version>5.2.13.RELEASE</spring.version>
         <commonslang.version>3.11</commonslang.version>
         <hessian2.version>4.0.65</hessian2.version>
+        <kryo.version>5.0.4</kryo.version>
         <cglib.version>3.3.0</cglib.version>
     </properties>
 
@@ -90,6 +91,11 @@
                 <groupId>com.caucho</groupId>
                 <artifactId>hessian</artifactId>
                 <version>${hessian2.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.esotericsoftware</groupId>
+                <artifactId>kryo</artifactId>
+                <version>${kryo.version}</version>
             </dependency>
             <dependency>
                 <groupId>cglib</groupId>

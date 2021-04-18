@@ -1,1 +1,2 @@
-serialization=com.zjj.jrpc.serialize.hessian2.Hessian2Serialization
+hessian2=com.zjj.jrpc.serialize.`hessian2`.Hessian2Serialization
+kyro=com.zjj.jrpc.serialize.kyro.KyroSerialization

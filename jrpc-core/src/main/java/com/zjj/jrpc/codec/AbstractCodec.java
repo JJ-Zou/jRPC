@@ -10,5 +10,4 @@ public abstract class AbstractCodec implements Codec {
     public void setSerialization(Serialization serialization) {
         this.serialization = serialization;
     }
-
 }
